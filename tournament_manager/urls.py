@@ -8,8 +8,8 @@ urlpatterns = [
     path('api/tournaments/', include('tournaments.urls')),
     path('api/teams/', include('teams.urls')),
     path('api/games/', include('games.urls')),
-    path('api/brackets/', include('brackets.urls')),
-    path('api/chat/', include('chat.urls')),
+    path('api/matches/', include('brackets.urls')),
+    path('api/', include('chat.urls')),
 ]
 
 # Servir archivos media en desarrollo
