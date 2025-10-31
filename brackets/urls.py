@@ -1,6 +1,10 @@
-from django.urls import path
-from . import views
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import MatchViewSet
+
+router = DefaultRouter()
+router.register(r'matches', MatchViewSet)
 
 urlpatterns = [
-    # URLs will be implemented later
+    path('api/', include(router.urls)),
 ]

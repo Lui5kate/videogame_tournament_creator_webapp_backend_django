@@ -101,30 +101,8 @@ class Match(models.Model):
     
     def declare_winner(self, winning_team):
         """Declarar ganador y actualizar estadísticas"""
-        if winning_team not in [self.team1, self.team2]:
-            raise ValueError("El equipo ganador debe ser uno de los participantes")
-        
-        self.winner = winning_team
-        self.status = 'completed'
-        self.completed_at = timezone.now()
-        self.save()
-        
-        # Actualizar estadísticas de equipos
-        losing_team = self.team2 if winning_team == self.team1 else self.team1
-        
-        winning_team.add_victory()
-        losing_team.add_loss()
-        
-        # Avanzar al siguiente round si es necesario
-        self._advance_winner_to_next_round()
-        
-        return True
-    
-    def _advance_winner_to_next_round(self):
-        """Lógica para avanzar ganador al siguiente round"""
-        # Esta función se implementaría con la lógica específica
-        # del bracket de eliminación doble
-        pass
+        from .services import MatchService
+        return MatchService.declare_winner(self, winning_team)
 
 class BracketGenerator:
     """Generador de brackets para torneos"""
@@ -132,42 +110,11 @@ class BracketGenerator:
     @staticmethod
     def generate_single_elimination(tournament):
         """Generar bracket de eliminación simple"""
-        teams = list(tournament.teams.all())
-        if len(teams) < 2:
-            return False
-        
-        # Lógica para generar bracket simple
-        round_number = 1
-        match_number = 1
-        
-        # Primera ronda
-        for i in range(0, len(teams), 2):
-            if i + 1 < len(teams):
-                Match.objects.create(
-                    tournament=tournament,
-                    team1=teams[i],
-                    team2=teams[i + 1],
-                    bracket_type='winners',
-                    round_number=round_number,
-                    match_number=match_number
-                )
-                match_number += 1
-        
-        return True
+        from .services import BracketGenerator as ServiceGenerator
+        return ServiceGenerator.generate_single_elimination(tournament)
     
     @staticmethod
     def generate_double_elimination(tournament):
         """Generar bracket de eliminación doble"""
-        teams = list(tournament.teams.all())
-        if len(teams) < 2:
-            return False
-        
-        # Generar Winners Bracket
-        BracketGenerator.generate_single_elimination(tournament)
-        
-        # TODO: Implementar lógica completa de eliminación doble
-        # - Losers Bracket
-        # - Gran Final
-        # - Reset de bracket
-        
-        return True
+        from .services import BracketGenerator as ServiceGenerator
+        return ServiceGenerator.generate_double_elimination(tournament)

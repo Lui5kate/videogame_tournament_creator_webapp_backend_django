@@ -1,6 +1,11 @@
-from django.urls import path
-from . import views
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import TeamViewSet, PlayerViewSet
+
+router = DefaultRouter()
+router.register(r'teams', TeamViewSet)
+router.register(r'players', PlayerViewSet)
 
 urlpatterns = [
-    # URLs will be implemented later
+    path('api/', include(router.urls)),
 ]
