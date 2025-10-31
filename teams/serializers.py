@@ -37,6 +37,31 @@ class TeamCreateSerializer(serializers.ModelSerializer):
         
         return team
 
+class TeamUpdateSerializer(serializers.ModelSerializer):
+    players = PlayerSerializer(many=True, required=False)
+    
+    class Meta:
+        model = Team
+        fields = ['name', 'players']
+    
+    def update(self, instance, validated_data):
+        players_data = validated_data.pop('players', [])
+        
+        # Actualizar nombre del equipo
+        instance.name = validated_data.get('name', instance.name)
+        instance.save()
+        
+        # Actualizar jugadores
+        if players_data:
+            for i, player_data in enumerate(players_data):
+                if i < len(instance.players.all()):
+                    player = instance.players.all()[i]
+                    player.name = player_data.get('name', player.name)
+                    player.is_captain = player_data.get('is_captain', player.is_captain)
+                    player.save()
+        
+        return instance
+
 class TeamWithPlayersSerializer(serializers.ModelSerializer):
     players = PlayerSerializer(many=True, read_only=True)
     matches_played = serializers.ReadOnlyField()

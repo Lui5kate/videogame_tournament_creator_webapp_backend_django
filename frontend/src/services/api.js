@@ -11,14 +11,20 @@ export const tournamentAPI = {
   getAll: () => api.get('/tournaments/'),
   create: (data) => api.post('/tournaments/', data),
   getById: (id) => api.get(`/tournaments/${id}/`),
+  update: (id, data) => api.put(`/tournaments/${id}/`, data),
+  delete: (id) => api.delete(`/tournaments/${id}/`),
   start: (id) => api.post(`/tournaments/${id}/start/`),
   getStats: (id) => api.get(`/tournaments/${id}/stats/`),
 }
 
 export const teamAPI = {
-  getAll: () => api.get('/teams/'),
+  getAll: (tournamentId) => api.get('/teams/', { 
+    params: tournamentId ? { tournament: tournamentId } : {} 
+  }),
   create: (data) => api.post('/teams/', data),
-  uploadPhoto: (id, formData) => api.post(`/teams/${id}/upload-photo/`, formData, {
+  update: (id, data) => api.put(`/teams/${id}/`, data),
+  delete: (id) => api.delete(`/teams/${id}/`),
+  uploadPhoto: (id, formData) => api.post(`/teams/${id}/upload_photo/`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
 }

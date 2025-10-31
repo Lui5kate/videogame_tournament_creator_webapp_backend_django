@@ -1,25 +1,28 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.shortcuts import get_object_or_404
 from .models import Team, Player
 from .serializers import (
     TeamSerializer, 
     TeamCreateSerializer, 
     TeamWithPlayersSerializer,
+    TeamUpdateSerializer,
     PlayerSerializer
 )
 
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
     
     def get_serializer_class(self):
         if self.action == 'create':
             return TeamCreateSerializer
         elif self.action in ['retrieve', 'list']:
             return TeamWithPlayersSerializer
+        elif self.action in ['update', 'partial_update']:
+            return TeamUpdateSerializer
         return TeamSerializer
     
     def get_queryset(self):
@@ -114,7 +117,7 @@ class TeamViewSet(viewsets.ModelViewSet):
 class PlayerViewSet(viewsets.ModelViewSet):
     queryset = Player.objects.all()
     serializer_class = PlayerSerializer
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
     
     def get_queryset(self):
         queryset = Player.objects.all()
