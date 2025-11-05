@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.shortcuts import get_object_or_404
+from django.db import IntegrityError
 from .models import Team, Player
 from .serializers import (
     TeamSerializer, 
@@ -24,6 +25,20 @@ class TeamViewSet(viewsets.ModelViewSet):
         elif self.action in ['update', 'partial_update']:
             return TeamUpdateSerializer
         return TeamSerializer
+    
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except IntegrityError as e:
+            if 'unique constraint' in str(e).lower() or 'unique_together' in str(e).lower():
+                return Response(
+                    {'error': 'Ya existe un equipo con ese nombre en este torneo. Usa un nombre diferente.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            return Response(
+                {'error': 'Error de integridad en la base de datos.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
     
     def get_queryset(self):
         queryset = Team.objects.all()

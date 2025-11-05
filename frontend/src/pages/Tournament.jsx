@@ -111,7 +111,7 @@ export default function Tournament() {
       {/* Navegación de secciones */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link 
-          to={`/tournament/${id}/teams`}
+          to={`/tournaments/${id}/teams`}
           className="bg-surface border-2 border-accent hover:border-primary rounded-lg p-6 text-center transition-colors group"
         >
           <div className="text-4xl mb-3">👥</div>
@@ -121,20 +121,20 @@ export default function Tournament() {
         </Link>
 
         <Link 
-          to={`/tournament/${id}/brackets`}
-          className="bg-surface border-2 border-accent hover:border-primary rounded-lg p-6 text-center transition-colors group"
+          to={`/tournaments/${id}/brackets`}
+          className="bg-surface border-2 border-secondary hover:border-primary rounded-lg p-6 text-center transition-colors group"
         >
           <div className="text-4xl mb-3">🏆</div>
           <h3 className="text-xl font-pixel text-white group-hover:text-primary">Brackets</h3>
-          <p className="text-gray-400 mt-2">Ver partidas y resultados</p>
-          <div className="text-accent font-pixel mt-2">{tournament.completed_matches_count} completadas</div>
+          <p className="text-gray-400 mt-2">Visualizar y gestionar partidas</p>
+          <div className="text-secondary font-pixel mt-2">{tournament.completed_matches_count} completadas</div>
         </Link>
 
-        <div className="bg-surface border-2 border-accent rounded-lg p-6 text-center">
+        <div className="bg-surface border-2 border-gray-600 rounded-lg p-6 text-center opacity-50">
           <div className="text-4xl mb-3">💬</div>
-          <h3 className="text-xl font-pixel text-white">Chat</h3>
-          <p className="text-gray-400 mt-2">Chat en vivo del torneo</p>
-          <div className="text-gray-500 font-pixel mt-2">Próximamente</div>
+          <h3 className="text-xl font-pixel text-gray-400">Chat</h3>
+          <p className="text-gray-500 mt-2">Próximamente</p>
+          <div className="text-gray-500 font-pixel mt-2">En desarrollo</div>
         </div>
       </div>
 

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -23,5 +25,22 @@
   
   .input-field {
     @apply bg-dark-light border border-primary/30 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:border-primary focus:outline-none;
+  }
+
+  .pixel-font {
+    font-family: 'Press Start 2P', monospace;
+    line-height: 1.6;
+  }
+
+  .arcade-glow {
+    box-shadow: 0 0 20px rgba(255, 204, 2, 0.6);
+  }
+
+  .arcade-glow-primary {
+    box-shadow: 0 0 15px rgba(255, 107, 53, 0.5);
+  }
+
+  .arcade-glow-secondary {
+    box-shadow: 0 0 15px rgba(247, 147, 30, 0.5);
   }
 }

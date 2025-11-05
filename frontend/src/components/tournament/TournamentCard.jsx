@@ -37,7 +37,7 @@ export default function TournamentCard({ tournament }) {
       </div>
       
       <Link 
-        to={`/tournament/${tournament.id}`}
+        to={`/tournaments/${tournament.id}`}
         className="btn-primary w-full text-center block"
       >
         Ver Torneo

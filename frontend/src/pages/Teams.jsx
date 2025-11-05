@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { teamAPI } from '../services/api'
 import TeamRegistrationForm from '../components/teams/TeamRegistrationForm'
@@ -21,6 +21,25 @@ export default function Teams() {
     mutationFn: teamAPI.create,
     onSuccess: () => {
       queryClient.invalidateQueries(['teams', tournamentId])
+    },
+    onError: (error) => {
+      console.error('Error creating team:', error)
+      console.error('Error response:', error.response?.data)
+      
+      if (error.response?.data) {
+        const errorData = error.response.data
+        if (errorData.non_field_errors) {
+          alert(`Error: ${errorData.non_field_errors[0]}`)
+        } else if (errorData.name) {
+          alert(`Error en nombre: ${errorData.name[0]}`)
+        } else if (errorData.players) {
+          alert(`Error en jugadores: ${JSON.stringify(errorData.players)}`)
+        } else {
+          alert(`Error: ${JSON.stringify(errorData)}`)
+        }
+      } else {
+        alert('Error al crear el equipo. Revisa los datos.')
+      }
     }
   })
 
@@ -55,8 +74,16 @@ export default function Teams() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-pixel text-primary">👥 Registro de Equipos</h2>
-        <div className="text-accent font-pixel">
-          {teams.length} equipos registrados
+        <div className="flex items-center gap-4">
+          <Link
+            to={`/tournaments/${tournamentId}/brackets`}
+            className="bg-gradient-to-r from-secondary to-accent text-white px-4 py-2 rounded-lg pixel-font text-sm hover:shadow-lg hover:shadow-secondary/50 transition-all duration-200 hover:scale-105"
+          >
+            🏆 Ver Brackets
+          </Link>
+          <div className="text-accent font-pixel">
+            {teams.length} equipos registrados
+          </div>
         </div>
       </div>
 

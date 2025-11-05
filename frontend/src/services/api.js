@@ -36,9 +36,16 @@ export const gameAPI = {
 
 export const matchAPI = {
   getAll: () => api.get('/matches/'),
-  declareWinner: (data) => api.post('/matches/declare-winner/', data),
+  getById: (id) => api.get(`/matches/${id}/`),
+  getByTournament: (tournamentId) => api.get(`/matches/?tournament=${tournamentId}`),
+  create: (data) => api.post('/matches/', data),
+  update: (id, data) => api.put(`/matches/${id}/`, data),
+  delete: (id) => api.delete(`/matches/${id}/`),
+  declareWinner: (data) => api.post('/matches/declare_winner/', data),
   generateBrackets: (data) => api.post('/matches/generate-brackets/', data),
-  getVisualization: () => api.get('/matches/visualization/'),
+  getVisualization: (tournamentId) => api.get(`/matches/visualization/?tournament=${tournamentId}`),
+  getNextMatches: (tournamentId) => api.get(`/matches/next-matches/?tournament=${tournamentId}`),
+  startMatch: (id) => api.post(`/matches/${id}/start-match/`)
 }
 
 export default api

@@ -14,9 +14,9 @@ function App() {
       <main className="container mx-auto px-4 py-8">
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/tournament/:id" element={<Tournament />} />
-          <Route path="/tournament/:id/teams" element={<Teams />} />
-          <Route path="/tournament/:id/brackets" element={<Brackets />} />
+          <Route path="/tournaments/:id" element={<Tournament />} />
+          <Route path="/tournaments/:id/teams" element={<Teams />} />
+          <Route path="/tournaments/:id/brackets" element={<Brackets />} />
         </Routes>
       </main>
     </div>

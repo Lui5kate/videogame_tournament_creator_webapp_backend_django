@@ -28,6 +28,22 @@ class TeamCreateSerializer(serializers.ModelSerializer):
         model = Team
         fields = ['tournament', 'name', 'team_photo', 'players']
     
+    def validate_players(self, value):
+        if len(value) != 2:
+            raise serializers.ValidationError("Debe haber exactamente 2 jugadores por equipo.")
+        
+        # Verificar que los nombres de jugadores no estén duplicados
+        player_names = [player['name'].strip() for player in value]
+        if len(set(player_names)) != len(player_names):
+            raise serializers.ValidationError("Los nombres de los jugadores deben ser únicos dentro del equipo.")
+        
+        # Verificar que haya exactamente un capitán
+        captains = [player for player in value if player.get('is_captain', False)]
+        if len(captains) != 1:
+            raise serializers.ValidationError("Debe haber exactamente un capitán por equipo.")
+        
+        return value
+    
     def create(self, validated_data):
         players_data = validated_data.pop('players', [])
         team = Team.objects.create(**validated_data)

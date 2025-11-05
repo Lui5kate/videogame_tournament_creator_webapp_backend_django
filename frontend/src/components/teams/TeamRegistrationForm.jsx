@@ -11,11 +11,27 @@ export default function TeamRegistrationForm({ onSubmit, isLoading, tournamentId
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    
+    // Validación básica
+    if (!formData.name.trim()) {
+      alert('Por favor ingresa el nombre del equipo')
+      return
+    }
+    
+    if (!formData.players[0].name.trim() || !formData.players[1].name.trim()) {
+      alert('Por favor ingresa los nombres de ambos jugadores')
+      return
+    }
+    
     onSubmit({
       tournament: tournamentId,
-      name: formData.name,
-      players: formData.players
+      name: formData.name.trim(),
+      players: formData.players.map(p => ({
+        name: p.name.trim(),
+        is_captain: p.is_captain
+      }))
     })
+    
     setFormData({
       name: '',
       players: [
