@@ -44,6 +44,73 @@
     box-shadow: 0 0 15px rgba(247, 147, 30, 0.5);
   }
 
+  /* Auth Styles */
+  .auth-background {
+    background: 
+      radial-gradient(circle at 25% 25%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(247, 147, 30, 0.1) 0%, transparent 50%),
+      linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+  }
+
+  .auth-card {
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 107, 53, 0.3);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 0 20px rgba(255, 107, 53, 0.1);
+  }
+
+  .auth-input {
+    background: rgba(51, 65, 85, 0.5);
+    border: 2px solid rgba(100, 116, 139, 1);
+    transition: all 0.2s ease;
+  }
+
+  .auth-input:focus {
+    border-color: #ff6b35;
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.2);
+    background: rgba(51, 65, 85, 0.7);
+  }
+
+  .auth-button {
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .auth-button:hover {
+    background: linear-gradient(135deg, #f7931e, #ffcc02);
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.25);
+  }
+
+  .auth-button:active {
+    transform: scale(0.98);
+  }
+
+  .auth-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .game-type-card {
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .game-type-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2);
+  }
+
+  .game-type-card.selected {
+    background: rgba(255, 107, 53, 0.2);
+    border-color: #ff6b35;
+    color: #fcd34d;
+  }
+
   /* Professional Bracket Styles */
   .bracket-viewport {
     position: relative;

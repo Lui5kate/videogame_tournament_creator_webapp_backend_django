@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-export default function TournamentCard({ tournament }) {
+export default function TournamentCard({ tournament, isAdmin = false }) {
   const statusColors = {
     setup: 'bg-gray-500',
     registration: 'bg-blue-500', 
@@ -36,12 +36,24 @@ export default function TournamentCard({ tournament }) {
         <span>Equipos: {tournament.registered_teams_count || 0}/{tournament.max_teams}</span>
       </div>
       
-      <Link 
-        to={`/tournaments/${tournament.id}`}
-        className="btn-primary w-full text-center block"
-      >
-        Ver Torneo
-      </Link>
+      <div className="space-y-2">
+        <Link 
+          to={`/tournaments/${tournament.id}`}
+          className="btn-primary w-full text-center block"
+        >
+          {isAdmin ? 'Gestionar Torneo' : 'Ver Torneo'}
+        </Link>
+        
+        {/* Botones solo para administradores */}
+        {isAdmin && (
+          <button 
+            onClick={() => {/* TODO: Implementar eliminación */}}
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors w-full text-sm mt-2"
+          >
+            🗑️ Eliminar
+          </button>
+        )}
+      </div>
     </div>
   )
 }

@@ -7,6 +7,33 @@ const api = axios.create({
   },
 })
 
+// Interceptor para añadir token automáticamente
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Interceptor para manejar tokens expirados
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const tournamentAPI = {
   getAll: () => api.get('/tournaments/'),
   create: (data) => api.post('/tournaments/', data),
@@ -18,15 +45,20 @@ export const tournamentAPI = {
 }
 
 export const teamAPI = {
-  getAll: (tournamentId) => api.get('/teams/', { 
+  getAll: (tournamentId) => api.get('/teams/teams/', { 
     params: tournamentId ? { tournament: tournamentId } : {} 
   }),
-  create: (data) => api.post('/teams/', data),
-  update: (id, data) => api.put(`/teams/${id}/`, data),
-  delete: (id) => api.delete(`/teams/${id}/`),
-  uploadPhoto: (id, formData) => api.post(`/teams/${id}/upload_photo/`, formData, {
+  getById: (id) => api.get(`/teams/teams/${id}/`),
+  getByTournament: (tournamentId) => api.get(`/teams/teams/?tournament=${tournamentId}`),
+  create: (data) => api.post('/teams/teams/', data),
+  update: (id, data) => api.put(`/teams/teams/${id}/`, data),
+  delete: (id) => api.delete(`/teams/teams/${id}/`),
+  uploadPhoto: (id, formData) => api.post(`/teams/teams/${id}/upload_photo/`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
+  getAvailablePlayers: (tournamentId) => api.get(`/teams/available-players/?tournament=${tournamentId}`),
+  assignPlayer: (data) => api.post('/teams/assign-player/', data),
+  removePlayer: (teamId, userId) => api.delete(`/teams/remove-player/${teamId}/${userId}/`)
 }
 
 export const gameAPI = {

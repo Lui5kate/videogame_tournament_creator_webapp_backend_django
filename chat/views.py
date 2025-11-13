@@ -1,222 +1,142 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from .models import ChatMessage, ChatRoom
 from .serializers import (
-    ChatMessageSerializer,
+    ChatMessageSerializer, 
     ChatMessageCreateSerializer,
-    ChatRoomSerializer,
+    ChatRoomSerializer, 
     SystemMessageSerializer
 )
 from tournaments.models import Tournament
+from users.permissions import IsAdminUser
 
-class ChatMessageViewSet(viewsets.ModelViewSet):
-    queryset = ChatMessage.objects.all()
-    
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return ChatMessageCreateSerializer
-        return ChatMessageSerializer
-    
-    def get_queryset(self):
-        queryset = ChatMessage.objects.all()
-        tournament_id = self.request.query_params.get('tournament', None)
-        message_type = self.request.query_params.get('type', None)
-        
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def messages_view(request):
+    if request.method == 'GET':
+        tournament_id = request.GET.get('tournament')
         if tournament_id:
-            queryset = queryset.filter(tournament_id=tournament_id)
-        if message_type:
-            queryset = queryset.filter(message_type=message_type)
-        
-        # Mostrar todos los mensajes sin límite
-        return queryset.order_by('-created_at')
-    
-    def create(self, request, *args, **kwargs):
-        """Crear nuevo mensaje de chat"""
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        # Obtener IP del usuario para moderación
-        ip_address = self.get_client_ip(request)
-        
-        message = serializer.save(
-            ip_address=ip_address,
-            message_type='user'
-        )
-        
-        # Limpiar mensajes antiguos si es necesario
-        # try:
-        #     chat_room = message.tournament.chat_room
-        #     chat_room.clean_old_messages()
-        # except ChatRoom.DoesNotExist:
-        #     # Crear sala de chat si no existe
-        #     ChatRoom.objects.create(tournament=message.tournament)
-        
-        return Response(
-            ChatMessageSerializer(message).data,
-            status=status.HTTP_201_CREATED
-        )
-    
-    def get_client_ip(self, request):
-        """Obtener IP del cliente"""
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
+            # Verificar que el usuario puede acceder al torneo
+            tournament = get_object_or_404(Tournament, id=tournament_id)
+            if not request.user.can_access_tournament(tournament_id):
+                return Response({'error': 'No tienes acceso a este torneo'}, status=403)
+            
+            messages = ChatMessage.objects.filter(tournament=tournament).order_by('-created_at')[:50]
+            messages = list(reversed(messages))  # Mostrar en orden cronológico
+            serializer = ChatMessageSerializer(messages, many=True)
+            return Response(serializer.data)
         else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+            return Response({'error': 'tournament parameter required'}, status=400)
     
-    @action(detail=False, methods=['post'])
-    def system_message(self, request):
-        """Crear mensaje del sistema"""
-        serializer = SystemMessageSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        message = serializer.save()
-        
-        return Response(
-            ChatMessageSerializer(message).data,
-            status=status.HTTP_201_CREATED
-        )
-    
-    @action(detail=False, methods=['get'])
-    def recent(self, request):
-        """Obtener mensajes recientes de un torneo"""
-        tournament_id = request.query_params.get('tournament_id')
-        
-        if not tournament_id:
-            return Response(
-                {'error': 'Se requiere tournament_id'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        try:
-            tournament = Tournament.objects.get(id=tournament_id)
-        except Tournament.DoesNotExist:
-            return Response(
-                {'error': 'Torneo no encontrado'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        # Obtener mensajes recientes
-        limit = int(request.query_params.get('limit', 50))
-        messages = tournament.chat_messages.order_by('-created_at')[:limit]
-        
-        # Invertir orden para mostrar más antiguos primero
-        messages = list(reversed(messages))
-        
-        serializer = ChatMessageSerializer(messages, many=True)
-        
-        return Response({
-            'tournament': {
-                'id': tournament.id,
-                'name': tournament.name,
-                'status': tournament.status
-            },
-            'messages': serializer.data,
-            'total_messages': tournament.chat_messages.count()
-        })
+    elif request.method == 'POST':
+        serializer = ChatMessageCreateSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            # Verificar acceso al torneo
+            tournament_id = serializer.validated_data['tournament'].id
+            if not request.user.can_access_tournament(tournament_id):
+                return Response({'error': 'No tienes acceso a este torneo'}, status=403)
+            
+            message = serializer.save()
+            return Response(ChatMessageSerializer(message).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ChatRoomViewSet(viewsets.ModelViewSet):
-    queryset = ChatRoom.objects.all()
-    serializer_class = ChatRoomSerializer
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def message_detail(request, pk):
+    message = get_object_or_404(ChatMessage, pk=pk)
     
-    def get_queryset(self):
-        queryset = ChatRoom.objects.all()
-        tournament_id = self.request.query_params.get('tournament', None)
-        if tournament_id:
-            queryset = queryset.filter(tournament_id=tournament_id)
-        return queryset.select_related('tournament')
+    # Verificar acceso al torneo
+    if not request.user.can_access_tournament(message.tournament.id):
+        return Response({'error': 'No tienes acceso a este torneo'}, status=403)
     
-    @action(detail=False, methods=['get'])
-    def by_tournament(self, request):
-        """Obtener sala de chat por torneo"""
-        tournament_id = request.query_params.get('tournament_id')
-        
-        if not tournament_id:
-            return Response(
-                {'error': 'Se requiere tournament_id'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        try:
-            tournament = Tournament.objects.get(id=tournament_id)
-        except Tournament.DoesNotExist:
-            return Response(
-                {'error': 'Torneo no encontrado'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        # Obtener o crear sala de chat
-        chat_room, created = ChatRoom.objects.get_or_create(
-            tournament=tournament,
-            defaults={'is_active': True}
-        )
-        
-        serializer = ChatRoomSerializer(chat_room)
-        
-        return Response({
-            'chat_room': serializer.data,
-            'created': created
-        })
+    serializer = ChatMessageSerializer(message)
+    return Response(serializer.data)
+
+@api_view(['DELETE'])
+@permission_classes([IsAdminUser])
+def delete_message(request, pk):
+    message = get_object_or_404(ChatMessage, pk=pk)
+    message.delete()
+    return Response({'message': 'Mensaje eliminado'}, status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def system_message(request):
+    serializer = SystemMessageSerializer(data=request.data)
+    if serializer.is_valid():
+        message = serializer.save()
+        return Response(ChatMessageSerializer(message).data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def recent_messages(request):
+    tournament_id = request.GET.get('tournament')
+    limit = int(request.GET.get('limit', 20))
     
-    @action(detail=True, methods=['post'])
-    def toggle_active(self, request, pk=None):
-        """Activar/desactivar chat"""
-        chat_room = self.get_object()
-        
-        chat_room.is_active = not chat_room.is_active
-        chat_room.save()
-        
-        # Mensaje del sistema
-        status_msg = "activado" if chat_room.is_active else "desactivado"
-        ChatMessage.create_system_message(
-            chat_room.tournament,
-            f"💬 El chat ha sido {status_msg}"
-        )
-        
-        return Response({
-            'message': f'Chat {status_msg}',
-            'is_active': chat_room.is_active
-        })
+    if not tournament_id:
+        return Response({'error': 'tournament parameter required'}, status=400)
     
-    @action(detail=True, methods=['post'])
-    def clear_messages(self, request, pk=None):
-        """Limpiar todos los mensajes del chat"""
-        chat_room = self.get_object()
-        
-        # Eliminar todos los mensajes
-        deleted_count = chat_room.tournament.chat_messages.count()
-        chat_room.tournament.chat_messages.all().delete()
-        
-        # Mensaje de confirmación
-        ChatMessage.create_system_message(
-            chat_room.tournament,
-            f"🧹 Chat limpiado. Se eliminaron {deleted_count} mensajes"
-        )
-        
-        return Response({
-            'message': f'Se eliminaron {deleted_count} mensajes',
-            'deleted_count': deleted_count
-        })
+    # Verificar acceso al torneo
+    if not request.user.can_access_tournament(tournament_id):
+        return Response({'error': 'No tienes acceso a este torneo'}, status=403)
     
-    @action(detail=True, methods=['get'])
-    def stats(self, request, pk=None):
-        """Obtener estadísticas del chat"""
-        chat_room = self.get_object()
+    messages = ChatMessage.objects.filter(
+        tournament_id=tournament_id
+    ).order_by('-created_at')[:limit]
+    
+    messages = list(reversed(messages))
+    serializer = ChatMessageSerializer(messages, many=True)
+    return Response(serializer.data)
+
+# Views para ChatRoom
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def rooms_view(request):
+    if request.method == 'GET':
+        # Solo admins pueden ver todas las salas
+        if request.user.is_admin():
+            rooms = ChatRoom.objects.all()
+        else:
+            # Jugadores solo ven salas de sus torneos asignados
+            tournament_ids = request.user.assigned_tournaments.values_list('id', flat=True)
+            rooms = ChatRoom.objects.filter(tournament_id__in=tournament_ids)
         
-        messages = chat_room.tournament.chat_messages.all()
+        serializer = ChatRoomSerializer(rooms, many=True)
+        return Response(serializer.data)
+    
+    elif request.method == 'POST':
+        # Solo admins pueden crear salas
+        if not request.user.is_admin():
+            return Response({'error': 'Solo administradores pueden crear salas'}, status=403)
         
-        stats = {
-            'total_messages': messages.count(),
-            'user_messages': messages.filter(message_type='user').count(),
-            'system_messages': messages.filter(message_type='system').count(),
-            'celebration_messages': messages.filter(message_type='celebration').count(),
-            'unique_users': messages.filter(message_type='user').values('username').distinct().count(),
-            'is_active': chat_room.is_active,
-            'max_messages': chat_room.max_messages,
-            'created_at': chat_room.created_at
-        }
-        
-        return Response(stats)
+        serializer = ChatRoomSerializer(data=request.data)
+        if serializer.is_valid():
+            room = serializer.save()
+            return Response(ChatRoomSerializer(room).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def room_by_tournament(request):
+    tournament_id = request.GET.get('tournament')
+    if not tournament_id:
+        return Response({'error': 'tournament parameter required'}, status=400)
+    
+    # Verificar acceso al torneo
+    if not request.user.can_access_tournament(tournament_id):
+        return Response({'error': 'No tienes acceso a este torneo'}, status=403)
+    
+    try:
+        room = ChatRoom.objects.get(tournament_id=tournament_id)
+        serializer = ChatRoomSerializer(room)
+        return Response(serializer.data)
+    except ChatRoom.DoesNotExist:
+        # Crear sala automáticamente si no existe
+        tournament = get_object_or_404(Tournament, id=tournament_id)
+        room = ChatRoom.objects.create(tournament=tournament)
+        serializer = ChatRoomSerializer(room)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

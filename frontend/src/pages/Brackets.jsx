@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '../hooks/useAuth.jsx'
 import { tournamentAPI } from '../services/api'
 import BracketVisualization from '../components/brackets/BracketVisualization'
 import ChatSidebar from '../components/chat/ChatSidebar'
@@ -9,6 +10,7 @@ import ChatToggle from '../components/chat/ChatToggle'
 export default function Brackets() {
   const { id } = useParams()
   const [chatOpen, setChatOpen] = useState(false)
+  const { isAdmin, user, logout } = useAuth()
   const queryClient = useQueryClient()
 
   const { data: tournament, isLoading } = useQuery({
@@ -71,6 +73,31 @@ export default function Brackets() {
   const canStartTournament = tournament.status === 'registration' && tournament.registered_teams_count >= 2
 
   return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Header con información del usuario */}
+      <header className="bg-slate-800/80 backdrop-blur-sm border-b-2 border-orange-500/30 p-4">
+        <div className="container mx-auto flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400 pixel-font">
+              🎮 TORNEO GAMING
+            </h1>
+            <p className="text-gray-300 text-sm mt-1">
+              Bienvenido, {user?.profile?.first_name || user?.username} 
+              <span className="ml-2 px-2 py-1 bg-orange-500/20 text-orange-300 rounded text-xs pixel-font">
+                {isAdmin() ? '👑 ADMIN' : '🎯 JUGADOR'}
+              </span>
+            </p>
+          </div>
+          
+          <button
+            onClick={logout}
+            className="bg-slate-700/50 hover:bg-red-600/50 border-2 border-slate-600 hover:border-red-500/50 text-gray-300 hover:text-red-400 font-semibold py-2 px-4 rounded-lg transition-all duration-200 pixel-font"
+          >
+            🚪 SALIR
+          </button>
+        </div>
+      </header>
+
     <div className="min-h-screen bg-background text-white">
       {/* Header */}
       <div className="bg-surface/50 border-b border-primary/30 p-6">
@@ -196,6 +223,7 @@ export default function Brackets() {
         isOpen={chatOpen} 
         onToggle={() => setChatOpen(false)} 
       />
+      </div>
     </div>
   )
 }

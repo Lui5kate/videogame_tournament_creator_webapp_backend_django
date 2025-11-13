@@ -8,10 +8,21 @@ class ChatMessage(models.Model):
         related_name='chat_messages'
     )
     
-    # Usuario simple sin autenticación
-    username = models.CharField(
-        max_length=50, 
-        verbose_name="Nombre de Usuario"
+    # Usuario autenticado
+    user = models.ForeignKey(
+        'users.User',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name="Usuario"
+    )
+    
+    # Nombre para mostrar (automático desde perfil)
+    display_name = models.CharField(
+        max_length=100, 
+        verbose_name="Nombre a Mostrar",
+        null=True,
+        blank=True
     )
     
     message = models.TextField(
@@ -35,23 +46,29 @@ class ChatMessage(models.Model):
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     
-    # Información adicional
-    ip_address = models.GenericIPAddressField(null=True, blank=True)
-    
     class Meta:
         verbose_name = "Mensaje de Chat"
         verbose_name_plural = "Mensajes de Chat"
         ordering = ['created_at']
     
     def __str__(self):
-        return f"{self.username}: {self.message[:50]}..."
+        return f"{self.display_name}: {self.message[:50]}..."
+    
+    def save(self, *args, **kwargs):
+        # Auto-generar display_name desde el perfil del usuario
+        if self.user and not self.display_name:
+            if hasattr(self.user, 'profile'):
+                self.display_name = f"{self.user.profile.first_name} {self.user.profile.last_name}"
+            else:
+                self.display_name = self.user.username
+        super().save(*args, **kwargs)
     
     @classmethod
     def create_system_message(cls, tournament, message):
         """Crear mensaje del sistema"""
         return cls.objects.create(
             tournament=tournament,
-            username="Sistema",
+            display_name="🤖 Sistema",
             message=message,
             message_type='system'
         )
@@ -69,7 +86,7 @@ class ChatMessage(models.Model):
         
         return cls.objects.create(
             tournament=tournament,
-            username="Sistema",
+            display_name="🎊 Celebración",
             message=message,
             message_type='celebration'
         )
@@ -84,7 +101,7 @@ class ChatRoom(models.Model):
     
     is_active = models.BooleanField(default=True, verbose_name="Chat Activo")
     max_messages = models.PositiveIntegerField(
-        default=100, 
+        default=1000, 
         verbose_name="Máximo de Mensajes Visibles"
     )
     
@@ -101,12 +118,3 @@ class ChatRoom(models.Model):
         """Obtener mensajes recientes"""
         limit = limit or self.max_messages
         return self.tournament.chat_messages.all()[:limit]
-    
-    def clean_old_messages(self):
-        """Limpiar mensajes antiguos si exceden el límite"""
-        messages = self.tournament.chat_messages.all()
-        if messages.count() > self.max_messages:
-            excess_count = messages.count() - self.max_messages
-            old_messages = messages[self.max_messages:]
-            for msg in old_messages:
-                msg.delete()

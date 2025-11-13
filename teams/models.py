@@ -85,6 +85,16 @@ class Team(models.Model):
 
 class Player(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
+    
+    # Relación con usuario del sistema
+    user = models.ForeignKey(
+        'users.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='player_profiles'
+    )
+    
     name = models.CharField(
         max_length=100, 
         validators=[MinLengthValidator(2)],

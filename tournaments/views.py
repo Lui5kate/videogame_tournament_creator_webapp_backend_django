@@ -27,6 +27,15 @@ class TournamentViewSet(viewsets.ModelViewSet):
         # Crear torneo con estado inicial
         tournament = serializer.save(status='registration')
         
+        # Generar equipos automáticamente
+        from teams.models import Team
+        max_teams = tournament.max_teams
+        for i in range(1, max_teams + 1):
+            Team.objects.create(
+                name=f"Equipo {i}",
+                tournament=tournament
+            )
+        
         # Crear sala de chat automáticamente
         from chat.models import ChatRoom
         ChatRoom.objects.get_or_create(tournament=tournament)

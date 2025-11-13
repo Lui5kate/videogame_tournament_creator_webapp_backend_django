@@ -1,168 +1,128 @@
-import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { teamAPI, tournamentAPI } from '../services/api'
-import TeamRegistrationForm from '../components/teams/TeamRegistrationForm'
-import TeamCard from '../components/teams/TeamCard'
-import TeamEditModal from '../components/teams/TeamEditModal'
-import ChatSidebar from '../components/chat/ChatSidebar'
-import ChatToggle from '../components/chat/ChatToggle'
+import { useQuery } from '@tanstack/react-query'
+import { useAuth } from '../hooks/useAuth.jsx'
+import { tournamentAPI } from '../services/api'
+import TeamManagement from '../components/team/TeamManagement'
 
 export default function Teams() {
   const { id: tournamentId } = useParams()
-  const [editingTeam, setEditingTeam] = useState(null)
-  const [chatOpen, setChatOpen] = useState(false)
-  const queryClient = useQueryClient()
+  const { isAdmin, user, logout } = useAuth()
 
-  const { data: tournament } = useQuery({
+  const { data: tournament, isLoading } = useQuery({
     queryKey: ['tournament', tournamentId],
-    queryFn: () => tournamentAPI.getById(tournamentId).then(res => res.data),
-    enabled: !!tournamentId
-  })
-
-  const { data: teams = [], isLoading } = useQuery({
-    queryKey: ['teams', tournamentId],
-    queryFn: () => teamAPI.getAll(tournamentId).then(res => res.data),
-    enabled: !!tournamentId
-  })
-
-  const createTeamMutation = useMutation({
-    mutationFn: teamAPI.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['teams', tournamentId])
-    },
-    onError: (error) => {
-      console.error('Error creating team:', error)
-      console.error('Error response:', error.response?.data)
-      
-      if (error.response?.data) {
-        const errorData = error.response.data
-        if (errorData.non_field_errors) {
-          alert(`Error: ${errorData.non_field_errors[0]}`)
-        } else if (errorData.name) {
-          alert(`Error en nombre: ${errorData.name[0]}`)
-        } else if (errorData.players) {
-          alert(`Error en jugadores: ${JSON.stringify(errorData.players)}`)
-        } else {
-          alert(`Error: ${JSON.stringify(errorData)}`)
-        }
-      } else {
-        alert('Error al crear el equipo. Revisa los datos.')
-      }
-    }
-  })
-
-  const uploadPhotoMutation = useMutation({
-    mutationFn: ({ teamId, formData }) => teamAPI.uploadPhoto(teamId, formData),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['teams', tournamentId])
-    }
-  })
-
-  const updateTeamMutation = useMutation({
-    mutationFn: ({ teamId, data }) => teamAPI.update(teamId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['teams', tournamentId])
-      setEditingTeam(null)
-    }
-  })
-
-  const deleteTeamMutation = useMutation({
-    mutationFn: teamAPI.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['teams', tournamentId])
-      setEditingTeam(null)
-    }
+    queryFn: () => tournamentAPI.getById(tournamentId).then(res => res.data)
   })
 
   if (isLoading) {
-    return <div className="text-center text-white">Cargando equipos...</div>
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-orange-400 pixel-font">🎮 CARGANDO EQUIPOS...</p>
+        </div>
+      </div>
+    )
   }
 
-  const canAddMoreTeams = tournament && teams.length < tournament.max_teams
+  if (!tournament) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-400 pixel-font mb-4">❌ TORNEO NO ENCONTRADO</h1>
+          <Link to="/" className="text-orange-400 hover:text-orange-300 pixel-font">
+            ← Volver al Dashboard
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Botón de regreso */}
-      <Link 
-        to={`/tournaments/${tournamentId}`}
-        className="inline-flex items-center space-x-2 text-accent hover:text-primary transition-colors font-pixel"
-      >
-        <span>←</span>
-        <span>Volver al Torneo</span>
-      </Link>
-
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-pixel text-primary">👥 Registro de Equipos</h2>
-        <div className="flex items-center gap-4">
-          <Link
-            to={`/tournaments/${tournamentId}/brackets`}
-            className="bg-gradient-to-r from-secondary to-accent text-white px-4 py-2 rounded-lg pixel-font text-sm hover:shadow-lg hover:shadow-secondary/50 transition-all duration-200 hover:scale-105"
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Header con información del usuario */}
+      <header className="bg-slate-800/80 backdrop-blur-sm border-b-2 border-orange-500/30 p-4">
+        <div className="container mx-auto flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400 pixel-font">
+              🎮 TORNEO GAMING
+            </h1>
+            <p className="text-gray-300 text-sm mt-1">
+              Bienvenido, {user?.profile?.first_name || user?.username} 
+              <span className="ml-2 px-2 py-1 bg-orange-500/20 text-orange-300 rounded text-xs pixel-font">
+                {isAdmin() ? '👑 ADMIN' : '🎯 JUGADOR'}
+              </span>
+            </p>
+          </div>
+          
+          <button
+            onClick={logout}
+            className="bg-slate-700/50 hover:bg-red-600/50 border-2 border-slate-600 hover:border-red-500/50 text-gray-300 hover:text-red-400 font-semibold py-2 px-4 rounded-lg transition-all duration-200 pixel-font"
           >
-            🏆 Ver Brackets
-          </Link>
-          <div className="text-accent font-pixel">
-            {teams.length}/{tournament?.max_teams || '?'} equipos
+            🚪 SALIR
+          </button>
+        </div>
+      </header>
+
+      {/* Header */}
+      <header className="bg-slate-800/80 backdrop-blur-sm border-b-2 border-orange-500/30 p-4">
+        <div className="container mx-auto">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Link 
+                to={`/tournaments/${tournamentId}`}
+                className="text-orange-400 hover:text-orange-300 transition-colors pixel-font flex items-center gap-2"
+              >
+                <span>←</span>
+                <span>Volver al Torneo</span>
+              </Link>
+              <div className="h-6 w-px bg-orange-500/30"></div>
+              <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400 pixel-font">
+                👥 GESTIÓN DE EQUIPOS
+              </h1>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <Link
+                to={`/tournaments/${tournamentId}/brackets`}
+                className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 pixel-font flex items-center gap-2"
+              >
+                🏆 Ver Brackets
+              </Link>
+              <div className="text-right">
+                <h2 className="text-lg font-bold text-orange-400 pixel-font">
+                  {tournament.name}
+                </h2>
+                <p className="text-sm text-gray-400">
+                  {tournament.max_teams} equipos máximo
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {canAddMoreTeams ? (
-        <TeamRegistrationForm 
-          onSubmit={createTeamMutation.mutate}
-          isLoading={createTeamMutation.isPending}
-          tournamentId={parseInt(tournamentId)}
-        />
-      ) : (
-        <div className="bg-orange-900/20 border-2 border-orange-500 rounded-lg p-4">
-          <div className="text-center">
-            <h3 className="text-orange-400 font-pixel mb-2">✅ Registro Completo</h3>
-            <p className="text-gray-300">Se ha alcanzado el límite máximo de {tournament?.max_teams} equipos</p>
-            <p className="text-gray-400 text-sm mt-1">Elimina un equipo para poder registrar uno nuevo</p>
+      {/* Contenido principal */}
+      <main className="container mx-auto px-4 py-8">
+        {isAdmin() ? (
+          <TeamManagement tournamentId={tournamentId} />
+        ) : (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">🚫</div>
+            <h3 className="text-2xl font-bold text-gray-400 mb-2 pixel-font">
+              ACCESO RESTRINGIDO
+            </h3>
+            <p className="text-gray-500 mb-6">
+              Solo los administradores pueden gestionar equipos
+            </p>
+            <Link 
+              to={`/tournaments/${tournamentId}`}
+              className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 pixel-font"
+            >
+              ← Volver al Torneo
+            </Link>
           </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {teams.map(team => (
-          <TeamCard 
-            key={team.id} 
-            team={team}
-            onUploadPhoto={(formData) => uploadPhotoMutation.mutate({ teamId: team.id, formData })}
-            onEdit={() => setEditingTeam(team)}
-            isUploading={uploadPhotoMutation.isPending}
-          />
-        ))}
-      </div>
-
-      {teams.length === 0 && (
-        <div className="text-center py-12 text-gray-400">
-          <div className="text-6xl mb-4">🎮</div>
-          <p className="text-xl">No hay equipos registrados aún</p>
-          <p>¡Registra el primer equipo para comenzar!</p>
-        </div>
-      )}
-
-      {editingTeam && (
-        <TeamEditModal
-          team={editingTeam}
-          onClose={() => setEditingTeam(null)}
-          onSave={(data) => updateTeamMutation.mutate({ teamId: editingTeam.id, data })}
-          onDelete={(teamId) => deleteTeamMutation.mutate(teamId)}
-          isLoading={updateTeamMutation.isPending || deleteTeamMutation.isPending}
-        />
-      )}
-
-      {/* Chat Components */}
-      <ChatToggle 
-        isOpen={chatOpen} 
-        onToggle={() => setChatOpen(!chatOpen)} 
-      />
-      <ChatSidebar 
-        tournamentId={tournamentId} 
-        isOpen={chatOpen} 
-        onToggle={() => setChatOpen(false)} 
-      />
+        )}
+      </main>
     </div>
   )
 }

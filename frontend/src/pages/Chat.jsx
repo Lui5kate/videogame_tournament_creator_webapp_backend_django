@@ -1,24 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '../hooks/useAuth.jsx'
 import { chatAPI, tournamentAPI } from '../services/api'
 
 export default function Chat() {
   const { id: tournamentId } = useParams()
   const [message, setMessage] = useState('')
-  const [username, setUsername] = useState('')
-  const [isUsernameSet, setIsUsernameSet] = useState(false)
   const messagesEndRef = useRef(null)
   const queryClient = useQueryClient()
-
-  // Load username from localStorage on mount
-  useEffect(() => {
-    const savedUsername = localStorage.getItem('chat_username')
-    if (savedUsername) {
-      setUsername(savedUsername)
-      setIsUsernameSet(true)
-    }
-  }, [])
+  const { user } = useAuth()
 
   const { data: tournament } = useQuery({
     queryKey: ['tournament', tournamentId],
@@ -28,59 +19,38 @@ export default function Chat() {
   const { data: messages = [], isLoading, refetch } = useQuery({
     queryKey: ['chat-messages', tournamentId],
     queryFn: () => chatAPI.getMessages(parseInt(tournamentId)).then(res => {
-      console.log('Messages fetched:', res.data.length)
-      return res.data.reverse()
+      return res.data
     }),
-    refetchInterval: 2000
+    refetchInterval: 3000,
+    enabled: !!tournamentId
   })
 
   const sendMessageMutation = useMutation({
     mutationFn: chatAPI.sendMessage,
-    onSuccess: async (data) => {
-      console.log('Message sent successfully:', data)
+    onSuccess: () => {
       setMessage('')
-      setTimeout(() => refetch(), 500)
+      refetch()
     },
     onError: (error) => {
       console.error('Error sending message:', error)
-      console.error('Error response:', error.response?.data)
-      alert('Error al enviar mensaje: ' + (error.response?.data?.message || error.message))
+      alert('Error al enviar mensaje')
     }
   })
 
-  const handleSendMessage = (e) => {
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  const handleSubmit = (e) => {
     e.preventDefault()
     if (!message.trim()) return
-    
-    if (!isUsernameSet) {
-      if (!username.trim() || username.trim().length < 2) {
-        alert('El nombre debe tener al menos 2 caracteres')
-        return
-      }
-      localStorage.setItem('chat_username', username.trim())
-      setIsUsernameSet(true)
-    }
-
-    console.log('Sending message:', {
-      tournament: parseInt(tournamentId),
-      username: username.trim(),
-      message: message.trim()
-    })
 
     sendMessageMutation.mutate({
       tournament: parseInt(tournamentId),
-      username: username.trim(),
       message: message.trim()
     })
   }
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
 
   const getMessageStyle = (messageType) => {
     const styles = {
@@ -111,6 +81,10 @@ export default function Chat() {
     )
   }
 
+  const displayName = user?.profile ? 
+    `${user.profile.first_name} ${user.profile.last_name}` : 
+    user?.username || 'Usuario'
+
   return (
     <div className="h-screen bg-gradient-to-br from-background via-dark to-background flex flex-col overflow-hidden">
       {/* Header */}
@@ -129,84 +103,58 @@ export default function Chat() {
             </div>
           </div>
           <div className="text-accent pixel-font text-sm">
-            {messages.length} mensajes
+            👤 {displayName}
           </div>
         </div>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-        <div className="flex-1 overflow-y-auto p-2 space-y-1 chat-messages">
-          {messages.map((msg) => (
-            <div key={msg.id} className={`p-3 rounded-lg chat-message ${getMessageStyle(msg.message_type)}`}>
-              <div className="flex items-start gap-3">
-                <div className="text-xl">{getMessageIcon(msg.message_type)}</div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-accent pixel-font text-sm">{msg.username}</span>
-                    <span className="text-xs text-gray-400">
-                      {new Date(msg.created_at).toLocaleTimeString()}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {messages.map((msg) => (
+          <div key={msg.id} className={`p-3 rounded-lg ${getMessageStyle(msg.message_type)}`}>
+            <div className="flex items-start gap-3">
+              <span className="text-lg flex-shrink-0">{getMessageIcon(msg.message_type)}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-semibold text-primary pixel-font text-sm">
+                    {msg.display_name}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {msg.formatted_time}
+                  </span>
+                  {msg.user_type === 'admin' && (
+                    <span className="text-xs bg-accent/20 text-accent px-2 py-1 rounded pixel-font">
+                      👑 ADMIN
                     </span>
-                  </div>
-                  <div className="text-white text-sm">{msg.message}</div>
+                  )}
                 </div>
+                <p className="text-gray-200 break-words">{msg.message}</p>
               </div>
             </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
 
-        <div className="bg-surface/90 backdrop-blur-sm border-t-2 border-primary/30 p-2 flex-shrink-0">
-          <form onSubmit={handleSendMessage} className="space-y-2">
-            {!isUsernameSet && (
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Tu nombre..."
-                className="w-full p-2 bg-background border-2 border-accent rounded text-blue-600 placeholder-gray-500 pixel-font text-sm"
-                autoComplete="off"
-                minLength={2}
-                required
-              />
-            )}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Escribe tu mensaje..."
-                className="flex-1 p-2 bg-background border-2 border-primary rounded text-blue-600 placeholder-gray-500 text-sm"
-                autoComplete="off"
-                disabled={sendMessageMutation.isPending}
-                required
-              />
-              <button
-                type="submit"
-                disabled={sendMessageMutation.isPending || !message.trim()}
-                className="bg-gradient-to-r from-primary to-secondary text-white px-4 py-2 rounded pixel-font disabled:opacity-50 text-sm"
-              >
-                🚀
-              </button>
-            </div>
-            {isUsernameSet && (
-              <div className="text-xs text-gray-400 pixel-font">
-                Como: <span className="text-accent">{username}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsUsernameSet(false)
-                    setUsername('')
-                    localStorage.removeItem('chat_username')
-                  }}
-                  className="ml-2 text-secondary hover:text-accent"
-                >
-                  (cambiar)
-                </button>
-              </div>
-            )}
-          </form>
-        </div>
+      {/* Message Input */}
+      <div className="bg-surface/90 backdrop-blur-sm border-t-2 border-primary/30 p-4 flex-shrink-0">
+        <form onSubmit={handleSubmit} className="flex gap-3">
+          <input
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Escribe tu mensaje..."
+            className="flex-1 bg-background border-2 border-primary/30 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:border-primary focus:outline-none"
+            disabled={sendMessageMutation.isLoading}
+          />
+          <button
+            type="submit"
+            disabled={!message.trim() || sendMessageMutation.isLoading}
+            className="bg-primary hover:bg-primary/80 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-lg transition-colors pixel-font"
+          >
+            {sendMessageMutation.isLoading ? '⏳' : '📤'}
+          </button>
+        </form>
       </div>
     </div>
   )

@@ -4,14 +4,15 @@ from .models import ChatMessage, ChatRoom
 class ChatMessageSerializer(serializers.ModelSerializer):
     tournament_name = serializers.CharField(source='tournament.name', read_only=True)
     formatted_time = serializers.SerializerMethodField()
+    user_type = serializers.CharField(source='user.user_type', read_only=True)
     
     class Meta:
         model = ChatMessage
         fields = [
-            'id', 'tournament', 'tournament_name', 'username', 'message',
-            'message_type', 'created_at', 'formatted_time'
+            'id', 'tournament', 'tournament_name', 'display_name', 'message',
+            'message_type', 'created_at', 'formatted_time', 'user_type'
         ]
-        read_only_fields = ['created_at', 'ip_address']
+        read_only_fields = ['created_at', 'display_name', 'user_type']
     
     def get_formatted_time(self, obj):
         return obj.created_at.strftime('%H:%M')
@@ -19,17 +20,18 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 class ChatMessageCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatMessage
-        fields = ['tournament', 'username', 'message']
-    
-    def validate_username(self, value):
-        if len(value.strip()) < 2:
-            raise serializers.ValidationError("El nombre debe tener al menos 2 caracteres")
-        return value.strip()
+        fields = ['tournament', 'message']
     
     def validate_message(self, value):
         if len(value.strip()) < 1:
             raise serializers.ValidationError("El mensaje no puede estar vacío")
         return value.strip()
+    
+    def create(self, validated_data):
+        # El usuario viene del contexto (request.user)
+        user = self.context['request'].user
+        validated_data['user'] = user
+        return super().create(validated_data)
 
 class ChatRoomSerializer(serializers.ModelSerializer):
     tournament_name = serializers.CharField(source='tournament.name', read_only=True)
@@ -72,9 +74,7 @@ class SystemMessageSerializer(serializers.Serializer):
         from tournaments.models import Tournament
         tournament = Tournament.objects.get(id=validated_data['tournament_id'])
         
-        return ChatMessage.objects.create(
+        return ChatMessage.create_system_message(
             tournament=tournament,
-            username="Sistema",
-            message=validated_data['message'],
-            message_type=validated_data['message_type']
+            message=validated_data['message']
         )

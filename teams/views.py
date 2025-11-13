@@ -1,203 +1,123 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-from django.db import IntegrityError
 from .models import Team, Player
 from .serializers import (
-    TeamSerializer, 
-    TeamCreateSerializer, 
-    TeamWithPlayersSerializer,
-    TeamUpdateSerializer,
-    PlayerSerializer
+    TeamSerializer, TeamCreateSerializer, TeamUpdateSerializer,
+    TeamWithPlayersSerializer, AssignPlayerSerializer, AvailablePlayersSerializer
 )
+from users.models import User
+from users.permissions import IsAdminUser
 
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
-    parser_classes = (JSONParser, MultiPartParser, FormParser)
     
     def get_serializer_class(self):
         if self.action == 'create':
             return TeamCreateSerializer
-        elif self.action in ['retrieve', 'list']:
-            return TeamWithPlayersSerializer
-        elif self.action in ['update', 'partial_update']:
+        elif self.action == 'update' or self.action == 'partial_update':
             return TeamUpdateSerializer
+        elif self.action == 'retrieve':
+            return TeamWithPlayersSerializer
         return TeamSerializer
-    
-    def create(self, request, *args, **kwargs):
-        try:
-            return super().create(request, *args, **kwargs)
-        except IntegrityError as e:
-            if 'unique constraint' in str(e).lower() or 'unique_together' in str(e).lower():
-                return Response(
-                    {'error': 'Ya existe un equipo con ese nombre en este torneo. Usa un nombre diferente.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            return Response(
-                {'error': 'Error de integridad en la base de datos.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-    
-    def get_queryset(self):
-        queryset = Team.objects.all()
-        tournament_id = self.request.query_params.get('tournament', None)
-        if tournament_id:
-            queryset = queryset.filter(tournament_id=tournament_id)
-        return queryset.order_by('-points', '-wins', 'name')
-    
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        # Verificar que el torneo esté en estado de registro
-        tournament = serializer.validated_data['tournament']
-        if tournament.status not in ['setup', 'registration']:
-            return Response(
-                {'error': 'El registro de equipos está cerrado para este torneo'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Verificar límite de equipos
-        if tournament.teams.count() >= tournament.max_teams:
-            return Response(
-                {'error': f'Se ha alcanzado el límite máximo de {tournament.max_teams} equipos'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        team = serializer.save()
-        
-        # Mensaje del sistema
-        from chat.models import ChatMessage
-        ChatMessage.create_system_message(
-            tournament,
-            f"👥 ¡El equipo {team.name} se ha registrado al torneo!"
-        )
-        
-        return Response(
-            TeamWithPlayersSerializer(team).data,
-            status=status.HTTP_201_CREATED
-        )
     
     @action(detail=True, methods=['post'])
     def upload_photo(self, request, pk=None):
-        """Subir foto del equipo"""
         team = self.get_object()
+        if 'photo' not in request.FILES:
+            return Response({'error': 'No se proporcionó ninguna foto'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
         
-        if 'team_photo' not in request.FILES:
-            return Response(
-                {'error': 'No se proporcionó ninguna imagen'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        team.team_photo = request.FILES['team_photo']
+        team.team_photo = request.FILES['photo']
         team.save()
         
-        return Response({
-            'message': 'Foto subida exitosamente',
-            'team_photo_url': team.team_photo.url if team.team_photo else None
-        })
+        serializer = self.get_serializer(team)
+        return Response(serializer.data)
     
     @action(detail=True, methods=['get'])
     def players(self, request, pk=None):
-        """Obtener jugadores del equipo"""
         team = self.get_object()
         players = team.players.all()
+        from .serializers import PlayerSerializer
         serializer = PlayerSerializer(players, many=True)
         return Response(serializer.data)
-    
-    @action(detail=True, methods=['post'])
-    def add_player(self, request, pk=None):
-        """Agregar jugador al equipo"""
-        team = self.get_object()
-        
-        # Verificar que el torneo no haya iniciado
-        if team.tournament.status not in ['setup', 'registration']:
-            return Response(
-                {'error': 'No se pueden agregar jugadores después de iniciar el torneo'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        serializer = PlayerSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        player = serializer.save(team=team)
-        
-        return Response(
-            PlayerSerializer(player).data,
-            status=status.HTTP_201_CREATED
-        )
 
-class PlayerViewSet(viewsets.ModelViewSet):
-    queryset = Player.objects.all()
-    serializer_class = PlayerSerializer
-    parser_classes = (JSONParser, MultiPartParser, FormParser)
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def available_players(request):
+    """Obtener jugadores disponibles para asignar a equipos"""
+    tournament_id = request.GET.get('tournament')
+    if not tournament_id:
+        return Response({'error': 'tournament parameter required'}, status=400)
     
-    def get_queryset(self):
-        queryset = Player.objects.all()
-        team_id = self.request.query_params.get('team', None)
-        if team_id:
-            queryset = queryset.filter(team_id=team_id)
-        return queryset
+    # Obtener todos los jugadores (usuarios tipo player) asignados al torneo
+    from users.models import UserTournamentAssignment
+    assigned_users = UserTournamentAssignment.objects.filter(
+        tournament_id=tournament_id,
+        status__in=['confirmed', 'active']
+    ).values_list('user_id', flat=True)
     
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    players = User.objects.filter(
+        id__in=assigned_users,
+        user_type='player'
+    ).select_related('profile')
+    
+    serializer = AvailablePlayersSerializer(
+        players, 
+        many=True, 
+        context={'tournament_id': tournament_id}
+    )
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def assign_player(request):
+    """Asignar un jugador a un equipo"""
+    serializer = AssignPlayerSerializer(data=request.data)
+    if serializer.is_valid():
+        user_id = serializer.validated_data['user_id']
+        team_id = serializer.validated_data['team_id']
+        is_captain = serializer.validated_data['is_captain']
         
-        # Verificar que el equipo no tenga más de 2 jugadores
-        team = serializer.validated_data['team']
-        if team.players.count() >= 2:
-            return Response(
-                {'error': 'Un equipo no puede tener más de 2 jugadores'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        user = User.objects.get(id=user_id)
+        team = Team.objects.get(id=team_id)
         
-        # Verificar que el torneo esté en estado de registro
-        if team.tournament.status not in ['setup', 'registration']:
-            return Response(
-                {'error': 'No se pueden agregar jugadores después de iniciar el torneo'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        player = serializer.save()
-        
-        return Response(
-            PlayerSerializer(player).data,
-            status=status.HTTP_201_CREATED
+        # Verificar si ya existe el jugador en este equipo
+        player, created = Player.objects.get_or_create(
+            user=user,
+            team=team,
+            defaults={
+                'name': f"{user.profile.first_name} {user.profile.last_name}" if hasattr(user, 'profile') else user.username,
+                'is_captain': is_captain
+            }
         )
-    
-    @action(detail=True, methods=['post'])
-    def upload_photo(self, request, pk=None):
-        """Subir foto del jugador"""
-        player = self.get_object()
         
-        if 'photo' not in request.FILES:
-            return Response(
-                {'error': 'No se proporcionó ninguna imagen'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if not created:
+            # Actualizar si ya existe
+            player.is_captain = is_captain
+            player.save()
         
-        player.photo = request.FILES['photo']
-        player.save()
+        # Si es capitán, quitar capitanía a otros jugadores del equipo
+        if is_captain:
+            Player.objects.filter(team=team).exclude(id=player.id).update(is_captain=False)
         
+        from .serializers import PlayerSerializer
         return Response({
-            'message': 'Foto subida exitosamente',
-            'photo_url': player.photo.url if player.photo else None
+            'message': 'Jugador asignado exitosamente',
+            'player': PlayerSerializer(player).data
         })
     
-    @action(detail=True, methods=['post'])
-    def set_captain(self, request, pk=None):
-        """Establecer jugador como capitán"""
-        player = self.get_object()
-        
-        # Remover capitanía de otros jugadores del equipo
-        player.team.players.update(is_captain=False)
-        
-        # Establecer como capitán
-        player.is_captain = True
-        player.save()
-        
-        return Response({
-            'message': f'{player.name} es ahora el capitán del equipo {player.team.name}'
-        })
+    return Response(serializer.errors, status=400)
+
+@api_view(['DELETE'])
+@permission_classes([IsAdminUser])
+def remove_player(request, team_id, user_id):
+    """Remover un jugador de un equipo"""
+    try:
+        player = Player.objects.get(team_id=team_id, user_id=user_id)
+        player.delete()
+        return Response({'message': 'Jugador removido del equipo'})
+    except Player.DoesNotExist:
+        return Response({'error': 'Jugador no encontrado en este equipo'}, status=404)
