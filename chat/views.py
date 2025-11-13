@@ -19,11 +19,7 @@ def messages_view(request):
     if request.method == 'GET':
         tournament_id = request.GET.get('tournament')
         if tournament_id:
-            # Verificar que el usuario puede acceder al torneo
             tournament = get_object_or_404(Tournament, id=tournament_id)
-            if not request.user.can_access_tournament(tournament_id):
-                return Response({'error': 'No tienes acceso a este torneo'}, status=403)
-            
             messages = ChatMessage.objects.filter(tournament=tournament).order_by('-created_at')[:50]
             messages = list(reversed(messages))  # Mostrar en orden cronológico
             serializer = ChatMessageSerializer(messages, many=True)
@@ -34,11 +30,6 @@ def messages_view(request):
     elif request.method == 'POST':
         serializer = ChatMessageCreateSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            # Verificar acceso al torneo
-            tournament_id = serializer.validated_data['tournament'].id
-            if not request.user.can_access_tournament(tournament_id):
-                return Response({'error': 'No tienes acceso a este torneo'}, status=403)
-            
             message = serializer.save()
             return Response(ChatMessageSerializer(message).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -47,11 +38,6 @@ def messages_view(request):
 @permission_classes([IsAuthenticated])
 def message_detail(request, pk):
     message = get_object_or_404(ChatMessage, pk=pk)
-    
-    # Verificar acceso al torneo
-    if not request.user.can_access_tournament(message.tournament.id):
-        return Response({'error': 'No tienes acceso a este torneo'}, status=403)
-    
     serializer = ChatMessageSerializer(message)
     return Response(serializer.data)
 

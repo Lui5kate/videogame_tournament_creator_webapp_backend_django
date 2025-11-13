@@ -4,9 +4,11 @@ import { useAuth } from '../hooks/useAuth.jsx'
 import { tournamentAPI } from '../services/api'
 import TournamentCard from '../components/tournament/TournamentCard'
 import CreateTournamentModal from '../components/tournament/CreateTournamentModal'
+import GameManagement from '../components/games/GameManagement'
 
 export default function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [activeTab, setActiveTab] = useState('tournaments')
   const { user, isAdmin, logout } = useAuth()
   
   const { data: tournaments, isLoading } = useQuery({
@@ -53,37 +55,68 @@ export default function Dashboard() {
 
       {/* Contenido principal */}
       <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400 pixel-font">
-              🏆 TORNEOS
-            </h2>
-            <p className="text-gray-400 mt-2">
-              {isAdmin() 
-                ? 'Gestiona y administra todos los torneos' 
-                : 'Únete a los torneos disponibles'
-              }
-            </p>
-          </div>
-          
-          {isAdmin() && (
-            <button 
-              onClick={() => setShowCreateModal(true)}
-              className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25 pixel-font"
+        {/* Tabs para Admin */}
+        {isAdmin() && (
+          <div className="flex gap-2 mb-8">
+            <button
+              onClick={() => setActiveTab('tournaments')}
+              className={`px-6 py-3 rounded-lg pixel-font text-sm transition-all duration-200 ${
+                activeTab === 'tournaments'
+                  ? 'bg-orange-500 text-white shadow-lg'
+                  : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+              }`}
             >
-              ✨ CREAR TORNEO
+              🏆 Torneos
             </button>
-          )}
-        </div>
+            <button
+              onClick={() => setActiveTab('games')}
+              className={`px-6 py-3 rounded-lg pixel-font text-sm transition-all duration-200 ${
+                activeTab === 'games'
+                  ? 'bg-orange-500 text-white shadow-lg'
+                  : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+              }`}
+            >
+              🎮 Juegos
+            </button>
+          </div>
+        )}
 
-        {/* Grid de torneos */}
-        {tournaments && tournaments.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tournaments.map(tournament => (
-              <TournamentCard 
-                key={tournament.id} 
-                tournament={tournament}
-                isAdmin={isAdmin()}
+        {/* Renderizar contenido según tab */}
+        {activeTab === 'games' && isAdmin() ? (
+          <GameManagement />
+        ) : (
+          <>
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400 pixel-font">
+                  🏆 TORNEOS
+                </h2>
+                <p className="text-gray-400 mt-2">
+                  {isAdmin() 
+                    ? 'Gestiona y administra todos los torneos' 
+                    : 'Únete a los torneos disponibles'
+                  }
+                </p>
+              </div>
+              
+              {isAdmin() && (
+                <button 
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25 pixel-font"
+                >
+                  ✨ CREAR TORNEO
+                </button>
+              )}
+            </div>
+
+            {/* Grid de torneos */}
+            {tournaments && tournaments.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {tournaments.map(tournament => (
+                  <TournamentCard 
+                    key={tournament.id} 
+                    tournament={tournament}
+                    isAdmin={isAdmin()}
               />
             ))}
           </div>
@@ -108,6 +141,8 @@ export default function Dashboard() {
               </button>
             )}
           </div>
+        )}
+          </>
         )}
 
         {/* Información adicional para jugadores */}

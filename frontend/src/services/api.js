@@ -63,11 +63,6 @@ export const teamAPI = {
   getMyTeam: (tournamentId) => api.get(`/teams/my-team/?tournament=${tournamentId}`)
 }
 
-export const gameAPI = {
-  getAll: () => api.get('/games/'),
-  getPredefined: () => api.get('/games/predefined/'),
-}
-
 export const matchAPI = {
   getAll: () => api.get('/matches/'),
   getById: (id) => api.get(`/matches/${id}/`),
@@ -91,6 +86,23 @@ export const chatAPI = {
   sendMessage: (data) => api.post('/messages/', data),
   getRoom: (tournamentId) => api.get(`/rooms/by-tournament/?tournament=${tournamentId}`),
   createRoom: (data) => api.post('/rooms/', data)
+}
+
+export const gameAPI = {
+  getAll: () => api.get('/games/'),
+  getById: (id) => api.get(`/games/${id}/`),
+  create: (data) => api.post('/games/', data),
+  update: (id, data) => api.patch(`/games/${id}/`, data),
+  delete: (id) => api.delete(`/games/${id}/`),
+  getPredefined: () => api.get('/games/predefined/'),
+  createFromTemplate: (data) => api.post('/games/create-from-template/', data),
+  uploadImage: (id, imageFile) => {
+    const formData = new FormData()
+    formData.append('image', imageFile)
+    return api.post(`/games/${id}/upload-image/`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  }
 }
 
 export default api

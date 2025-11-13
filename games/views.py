@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from .models import Game, TournamentGame
 from .serializers import (
     GameSerializer, 
@@ -10,12 +10,12 @@ from .serializers import (
 )
 
 class GameViewSet(viewsets.ModelViewSet):
-    queryset = Game.objects.filter(is_active=True)
+    queryset = Game.objects.all()
     serializer_class = GameSerializer
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
     
     def get_queryset(self):
-        queryset = Game.objects.filter(is_active=True)
+        queryset = Game.objects.all()
         
         # Filtrar por tipo
         game_type = self.request.query_params.get('type', None)
@@ -33,6 +33,26 @@ class GameViewSet(viewsets.ModelViewSet):
         
         # Los juegos creados por usuarios no son predefinidos
         game = serializer.save(is_predefined=False)
+        
+        return Response(
+            GameSerializer(game).data,
+            status=status.HTTP_201_CREATED
+        )
+    
+    def update(self, request, *args, **kwargs):
+        """Actualizar juego - permite actualizaciones parciales"""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        return Response(serializer.data)
+    
+    def partial_update(self, request, *args, **kwargs):
+        """Actualización parcial"""
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
         
         return Response(
             GameSerializer(game).data,
