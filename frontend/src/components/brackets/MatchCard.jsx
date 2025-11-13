@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { matchAPI } from '../../services/api'
 
-export default function MatchCard({ match, tournamentId }) {
+export default function MatchCard({ match, tournamentId, disabled = false }) {
   const [isLoading, setIsLoading] = useState(false)
   const queryClient = useQueryClient()
 
@@ -16,7 +16,19 @@ export default function MatchCard({ match, tournamentId }) {
     onError: () => setIsLoading(false)
   })
 
+  const manualAdvanceMutation = useMutation({
+    mutationFn: (matchId) => matchAPI.manualAdvance(matchId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['matches', tournamentId])
+      queryClient.invalidateQueries(['tournament', tournamentId])
+      setIsLoading(false)
+    },
+    onError: () => setIsLoading(false)
+  })
+
   const handleDeclareWinner = (winnerId) => {
+    if (disabled) return
+    
     setIsLoading(true)
     declareWinnerMutation.mutate({
       match_id: match.id,
@@ -24,14 +36,29 @@ export default function MatchCard({ match, tournamentId }) {
     })
   }
 
+  const handleManualAdvance = () => {
+    if (disabled) return
+    
+    setIsLoading(true)
+    manualAdvanceMutation.mutate(match.id)
+  }
+
   const getBracketTypeStyle = (type) => {
-    const styles = {
+    const baseStyles = {
       winners: 'border-accent bg-gradient-to-r from-primary/20 to-secondary/20',
       losers: 'border-secondary bg-gradient-to-r from-secondary/20 to-accent/20',
       grand_final: 'border-accent bg-gradient-to-r from-accent/30 to-primary/30 shadow-lg shadow-accent/50',
       final_reset: 'border-primary bg-gradient-to-r from-primary/30 to-secondary/30 shadow-lg shadow-primary/50'
     }
-    return styles[type] || 'border-gray-600 bg-gray-800/50'
+    
+    const style = baseStyles[type] || 'border-gray-600 bg-gray-800/50'
+    
+    // Si está deshabilitado, aplicar estilos de bloqueo
+    if (disabled) {
+      return `${style} opacity-50 grayscale`
+    }
+    
+    return style
   }
 
   const getBracketTypeLabel = (type) => {
@@ -45,9 +72,25 @@ export default function MatchCard({ match, tournamentId }) {
   }
 
   const getTeamButtonStyle = (team, isWinner, isCompleted) => {
+    if (disabled) {
+      return 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
+    }
+    
     if (isWinner) return 'bg-green-600 text-white shadow-lg shadow-green-500/50 transform scale-105'
     if (isCompleted) return 'bg-gray-700 text-gray-400'
     return 'bg-surface hover:bg-primary/80 text-white hover:shadow-lg hover:shadow-primary/50 transition-all duration-200 hover:scale-105'
+  }
+
+  const canDeclareWinner = (team) => {
+    return !disabled && team && match.status === 'pending' && match.team1 && match.team2 && !isLoading
+  }
+
+  const isOrphanedMatch = () => {
+    return match.status === 'pending' && match.team1 && !match.team2
+  }
+
+  const canManualAdvance = () => {
+    return !disabled && isOrphanedMatch() && !isLoading
   }
 
   return (
@@ -56,6 +99,7 @@ export default function MatchCard({ match, tournamentId }) {
       <div className="flex justify-between items-center mb-3">
         <span className="text-sm font-bold text-accent pixel-font">
           {getBracketTypeLabel(match.bracket_type)} - R{match.round_number}
+          {disabled && <span className="ml-2 text-red-400">🔒</span>}
         </span>
         <span className="text-xs text-gray-400">
           Match #{match.match_number}
@@ -74,8 +118,8 @@ export default function MatchCard({ match, tournamentId }) {
       <div className="space-y-2">
         {match.team1 ? (
           <button
-            onClick={() => handleDeclareWinner(match.team1.id)}
-            disabled={match.status === 'completed' || isLoading}
+            onClick={() => canDeclareWinner(match.team1) && handleDeclareWinner(match.team1.id)}
+            disabled={!canDeclareWinner(match.team1)}
             className={`w-full p-3 rounded text-left pixel-font text-sm ${getTeamButtonStyle(
               match.team1, 
               match.winner?.id === match.team1.id, 
@@ -97,8 +141,8 @@ export default function MatchCard({ match, tournamentId }) {
 
         {match.team2 ? (
           <button
-            onClick={() => handleDeclareWinner(match.team2.id)}
-            disabled={match.status === 'completed' || isLoading}
+            onClick={() => canDeclareWinner(match.team2) && handleDeclareWinner(match.team2.id)}
+            disabled={!canDeclareWinner(match.team2)}
             className={`w-full p-3 rounded text-left pixel-font text-sm ${getTeamButtonStyle(
               match.team2, 
               match.winner?.id === match.team2.id, 
@@ -117,6 +161,29 @@ export default function MatchCard({ match, tournamentId }) {
         )}
       </div>
 
+      {/* Manual Advance Button for Orphaned Teams */}
+      {isOrphanedMatch() && (
+        <div className="mt-3">
+          <button
+            onClick={handleManualAdvance}
+            disabled={!canManualAdvance()}
+            className="w-full bg-gradient-to-r from-accent to-secondary text-white px-4 py-2 rounded-lg pixel-font text-xs hover:shadow-lg hover:shadow-accent/50 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            ⚡ Avanzar por BYE
+          </button>
+          <div className="text-center mt-1 text-yellow-400 pixel-font text-xs">
+            🔄 Esperando rival - Click para avanzar
+          </div>
+        </div>
+      )}
+
+      {/* Status Messages */}
+      {disabled && (
+        <div className="text-center mt-3 text-red-400 pixel-font text-xs">
+          🔒 Round bloqueado - Completa rounds anteriores primero
+        </div>
+      )}
+
       {/* Loading State */}
       {isLoading && (
         <div className="text-center mt-3 text-accent pixel-font text-sm animate-pulse">
@@ -132,7 +199,7 @@ export default function MatchCard({ match, tournamentId }) {
         {match.status === 'in_progress' && (
           <span className="text-blue-400 text-xs pixel-font animate-pulse">🎮 En Progreso</span>
         )}
-        {match.status === 'pending' && (
+        {match.status === 'pending' && !disabled && !isOrphanedMatch() && (
           <span className="text-gray-400 text-xs pixel-font">⏳ Pendiente</span>
         )}
       </div>

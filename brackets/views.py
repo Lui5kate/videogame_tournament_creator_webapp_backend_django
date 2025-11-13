@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from django.db import models
 from .models import Match, BracketGenerator
 from .serializers import (
     MatchSerializer, 
@@ -77,6 +78,10 @@ class MatchViewSet(viewsets.ModelViewSet):
                 # Finalizar torneo automáticamente
                 match.tournament.status = 'completed'
                 match.tournament.save()
+            
+            # Ejecutar limpieza automática después de cada partida
+            from .services import MatchService
+            MatchService.cleanup_impossible_matches(match.tournament)
             
             return Response({
                 'message': f'{winner.name} ha ganado la partida',
@@ -242,4 +247,187 @@ class MatchViewSet(viewsets.ModelViewSet):
         return Response({
             'next_matches': serializer.data,
             'count': next_matches.count()
+        })
+    
+    @action(detail=False, methods=['get'])
+    def get_active_round(self, request):
+        """Obtener el round activo que debe jugarse siguiente"""
+        tournament_id = request.query_params.get('tournament_id')
+        
+        if not tournament_id:
+            return Response(
+                {'error': 'Se requiere tournament_id'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            tournament = Tournament.objects.get(id=tournament_id)
+        except Tournament.DoesNotExist:
+            return Response(
+                {'error': 'Torneo no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Determinar el siguiente round que debe jugarse
+        active_round = self._determine_active_round(tournament)
+        
+        return Response({
+            'active_round': active_round,
+            'tournament_id': tournament_id
+        })
+    
+    def _determine_active_round(self, tournament):
+        """Determinar cuál es el round activo que debe jugarse"""
+        # Orden: WR1 → LR1 → WR2 → LR2 → WR3 → LR3 → WR4 → LR4 → GF → RF
+        
+        # Verificar Winners rounds en orden
+        max_winners_round = Match.objects.filter(
+            tournament=tournament,
+            bracket_type='winners'
+        ).aggregate(max_round=models.Max('round_number'))['max_round'] or 0
+        
+        for round_num in range(1, max_winners_round + 1):
+            # Verificar Winners Round
+            winners_pending = Match.objects.filter(
+                tournament=tournament,
+                bracket_type='winners',
+                round_number=round_num,
+                status='pending',
+                team1__isnull=False,
+                team2__isnull=False
+            ).exists()
+            
+            if winners_pending:
+                return {'bracket_type': 'winners', 'round_number': round_num}
+            
+            # Verificar Losers Round correspondiente
+            losers_pending = Match.objects.filter(
+                tournament=tournament,
+                bracket_type='losers',
+                round_number=round_num,
+                status='pending',
+                team1__isnull=False,
+                team2__isnull=False
+            ).exists()
+            
+            if losers_pending:
+                return {'bracket_type': 'losers', 'round_number': round_num}
+        
+        # Verificar finales
+        grand_final_pending = Match.objects.filter(
+            tournament=tournament,
+            bracket_type='grand_final',
+            status='pending',
+            team1__isnull=False,
+            team2__isnull=False
+        ).exists()
+        
+        if grand_final_pending:
+            return {'bracket_type': 'grand_final', 'round_number': 1}
+        
+        final_reset_pending = Match.objects.filter(
+            tournament=tournament,
+            bracket_type='final_reset',
+            status='pending',
+            team1__isnull=False,
+            team2__isnull=False
+        ).exists()
+        
+        if final_reset_pending:
+            return {'bracket_type': 'final_reset', 'round_number': 1}
+        
+        return None
+    
+    @action(detail=False, methods=['post'])
+    def cleanup_tournament(self, request):
+        """Limpiar partidas imposibles y finalizar torneo si es necesario"""
+        tournament_id = request.data.get('tournament_id')
+        
+        if not tournament_id:
+            return Response(
+                {'error': 'Se requiere tournament_id'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            tournament = Tournament.objects.get(id=tournament_id)
+        except Tournament.DoesNotExist:
+            return Response(
+                {'error': 'Torneo no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Ejecutar limpieza inteligente
+        from .services import MatchService
+        orphaned_count = MatchService.cleanup_impossible_matches(tournament)
+        
+        # Obtener estado actualizado
+        tournament.refresh_from_db()
+        pending_matches = Match.objects.filter(tournament=tournament, status='pending').count()
+        
+        return Response({
+            'message': 'Limpieza ejecutada exitosamente',
+            'orphaned_teams_advanced': orphaned_count,
+            'tournament_status': tournament.status,
+            'pending_matches': pending_matches
+        })
+    
+    @action(detail=True, methods=['post'])
+    def manual_advance(self, request, pk=None):
+        """Avanzar equipo manualmente (para partidas huérfanas)"""
+        match = self.get_object()
+        
+        try:
+            from .services import MatchService
+            MatchService.manual_advance_team(match.id)
+            
+            # Mensaje del sistema
+            from chat.models import ChatMessage
+            ChatMessage.create_system_message(
+                match.tournament,
+                f"⚡ {match.team1.name} avanza automáticamente por BYE"
+            )
+            
+            return Response({
+                'message': f'{match.team1.name} avanzado exitosamente',
+                'match': MatchSerializer(match).data
+            })
+            
+        except ValueError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error al avanzar equipo: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'])
+    def advanceable_matches(self, request):
+        """Obtener partidas elegibles para avance manual"""
+        tournament_id = request.query_params.get('tournament_id')
+        
+        if not tournament_id:
+            return Response(
+                {'error': 'Se requiere tournament_id'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            tournament = Tournament.objects.get(id=tournament_id)
+        except Tournament.DoesNotExist:
+            return Response(
+                {'error': 'Torneo no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        from .services import MatchService
+        advanceable = MatchService.get_advanceable_matches(tournament)
+        serializer = MatchSerializer(advanceable, many=True)
+        
+        return Response({
+            'advanceable_matches': serializer.data,
+            'count': advanceable.count()
         })

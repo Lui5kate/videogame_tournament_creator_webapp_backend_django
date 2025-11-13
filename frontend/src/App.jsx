@@ -8,7 +8,7 @@ function App() {
   return (
     <div className="min-h-screen bg-dark">
       <header className="bg-dark-light border-b border-primary/20 p-4">
-        <h1 className="text-2xl font-pixel text-primary">🎮 Torneo Gaming</h1>
+        <h1 className="text-2xl font-pixel text-primary">🎮 Videogame Tourney Maker</h1>
       </header>
       
       <main className="container mx-auto px-4 py-8">

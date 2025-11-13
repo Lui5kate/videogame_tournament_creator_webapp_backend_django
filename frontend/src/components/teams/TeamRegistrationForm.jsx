@@ -58,7 +58,7 @@ export default function TeamRegistrationForm({ onSubmit, isLoading, tournamentId
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full p-3 bg-background border-2 border-accent rounded text-gray-300 placeholder-gray-500"
+            className="w-full p-3 bg-background border-2 border-accent rounded text-blue-300 placeholder-gray-500"
             placeholder="Los Guerreros Gaming"
             required
           />
@@ -74,7 +74,7 @@ export default function TeamRegistrationForm({ onSubmit, isLoading, tournamentId
                 type="text"
                 value={player.name}
                 onChange={(e) => updatePlayer(index, 'name', e.target.value)}
-                className="w-full p-3 bg-background border-2 border-accent rounded text-gray-300 placeholder-gray-500"
+                className="w-full p-3 bg-background border-2 border-accent rounded text-blue-300 placeholder-gray-500"
                 placeholder={player.is_captain ? "Mario" : "Luigi"}
                 required
               />

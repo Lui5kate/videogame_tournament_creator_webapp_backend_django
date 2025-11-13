@@ -45,7 +45,11 @@ export const matchAPI = {
   generateBrackets: (data) => api.post('/matches/generate-brackets/', data),
   getVisualization: (tournamentId) => api.get(`/matches/visualization/?tournament=${tournamentId}`),
   getNextMatches: (tournamentId) => api.get(`/matches/next-matches/?tournament=${tournamentId}`),
-  startMatch: (id) => api.post(`/matches/${id}/start-match/`)
+  startMatch: (id) => api.post(`/matches/${id}/start-match/`),
+  getActiveRound: (tournamentId) => api.get(`/matches/get_active_round/?tournament_id=${tournamentId}`),
+  manualAdvance: (matchId) => api.post(`/matches/${matchId}/manual_advance/`),
+  cleanupTournament: (tournamentId) => api.post('/matches/cleanup_tournament/', { tournament_id: tournamentId }),
+  getAdvanceableMatches: (tournamentId) => api.get(`/matches/advanceable_matches/?tournament_id=${tournamentId}`)
 }
 
 export default api

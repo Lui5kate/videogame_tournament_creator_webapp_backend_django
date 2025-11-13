@@ -8,6 +8,7 @@ export default function Tournament() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const queryClient = useQueryClient()
   
   const { data: tournament, isLoading } = useQuery({
@@ -60,6 +61,15 @@ export default function Tournament() {
 
   return (
     <div className="space-y-6">
+      {/* Botón de regreso */}
+      <Link 
+        to="/"
+        className="inline-flex items-center space-x-2 text-accent hover:text-primary transition-colors font-pixel"
+      >
+        <span>←</span>
+        <span>Volver al Dashboard</span>
+      </Link>
+
       {/* Header del torneo */}
       <div className="bg-surface border-2 border-primary rounded-lg p-6">
         <div className="flex justify-between items-start mb-4">
@@ -71,15 +81,17 @@ export default function Tournament() {
             <span className={`font-pixel ${getStatusColor(tournament.status)}`}>
               {getStatusText(tournament.status)}
             </span>
+            {tournament.status !== 'completed' && (
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="text-accent hover:text-primary text-lg"
+                title="Editar torneo"
+              >
+                ✏️
+              </button>
+            )}
             <button
-              onClick={() => setShowEditModal(true)}
-              className="text-accent hover:text-primary text-lg"
-              title="Editar torneo"
-            >
-              ✏️
-            </button>
-            <button
-              onClick={() => deleteTournamentMutation.mutate(id)}
+              onClick={() => setShowDeleteModal(true)}
               className="text-red-400 hover:text-red-300 text-lg"
               title="Eliminar torneo"
             >
@@ -170,6 +182,38 @@ export default function Tournament() {
           onDelete={() => deleteTournamentMutation.mutate(id)}
           isLoading={updateTournamentMutation.isPending || deleteTournamentMutation.isPending}
         />
+      )}
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="card max-w-md w-full mx-4">
+            <h3 className="text-xl font-pixel text-red-400 mb-4">🗑️ Confirmar Eliminación</h3>
+            <p className="text-gray-300 mb-6">
+              ¿Estás seguro de que quieres eliminar el torneo <strong>"{tournament.name}"</strong>?
+            </p>
+            <p className="text-red-300 text-sm mb-6">
+              Esta acción no se puede deshacer y se perderán todos los datos del torneo.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded font-pixel"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  deleteTournamentMutation.mutate(id)
+                  setShowDeleteModal(false)
+                }}
+                disabled={deleteTournamentMutation.isPending}
+                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded font-pixel disabled:opacity-50"
+              >
+                {deleteTournamentMutation.isPending ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

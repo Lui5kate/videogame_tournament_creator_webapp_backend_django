@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { teamAPI } from '../services/api'
+import { teamAPI, tournamentAPI } from '../services/api'
 import TeamRegistrationForm from '../components/teams/TeamRegistrationForm'
 import TeamCard from '../components/teams/TeamCard'
 import TeamEditModal from '../components/teams/TeamEditModal'
@@ -10,6 +10,12 @@ export default function Teams() {
   const { id: tournamentId } = useParams()
   const [editingTeam, setEditingTeam] = useState(null)
   const queryClient = useQueryClient()
+
+  const { data: tournament } = useQuery({
+    queryKey: ['tournament', tournamentId],
+    queryFn: () => tournamentAPI.getById(tournamentId).then(res => res.data),
+    enabled: !!tournamentId
+  })
 
   const { data: teams = [], isLoading } = useQuery({
     queryKey: ['teams', tournamentId],
@@ -70,8 +76,19 @@ export default function Teams() {
     return <div className="text-center text-white">Cargando equipos...</div>
   }
 
+  const canAddMoreTeams = tournament && teams.length < tournament.max_teams
+
   return (
     <div className="space-y-6">
+      {/* Botón de regreso */}
+      <Link 
+        to={`/tournaments/${tournamentId}`}
+        className="inline-flex items-center space-x-2 text-accent hover:text-primary transition-colors font-pixel"
+      >
+        <span>←</span>
+        <span>Volver al Torneo</span>
+      </Link>
+
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-pixel text-primary">👥 Registro de Equipos</h2>
         <div className="flex items-center gap-4">
@@ -82,16 +99,26 @@ export default function Teams() {
             🏆 Ver Brackets
           </Link>
           <div className="text-accent font-pixel">
-            {teams.length} equipos registrados
+            {teams.length}/{tournament?.max_teams || '?'} equipos
           </div>
         </div>
       </div>
 
-      <TeamRegistrationForm 
-        onSubmit={createTeamMutation.mutate}
-        isLoading={createTeamMutation.isPending}
-        tournamentId={parseInt(tournamentId)}
-      />
+      {canAddMoreTeams ? (
+        <TeamRegistrationForm 
+          onSubmit={createTeamMutation.mutate}
+          isLoading={createTeamMutation.isPending}
+          tournamentId={parseInt(tournamentId)}
+        />
+      ) : (
+        <div className="bg-orange-900/20 border-2 border-orange-500 rounded-lg p-4">
+          <div className="text-center">
+            <h3 className="text-orange-400 font-pixel mb-2">✅ Registro Completo</h3>
+            <p className="text-gray-300">Se ha alcanzado el límite máximo de {tournament?.max_teams} equipos</p>
+            <p className="text-gray-400 text-sm mt-1">Elimina un equipo para poder registrar uno nuevo</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {teams.map(team => (
