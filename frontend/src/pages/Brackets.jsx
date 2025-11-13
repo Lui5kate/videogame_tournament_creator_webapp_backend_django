@@ -1,10 +1,14 @@
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { tournamentAPI } from '../services/api'
 import BracketVisualization from '../components/brackets/BracketVisualization'
+import ChatSidebar from '../components/chat/ChatSidebar'
+import ChatToggle from '../components/chat/ChatToggle'
 
 export default function Brackets() {
   const { id } = useParams()
+  const [chatOpen, setChatOpen] = useState(false)
   const queryClient = useQueryClient()
 
   const { data: tournament, isLoading } = useQuery({
@@ -181,6 +185,17 @@ export default function Brackets() {
           <BracketVisualization tournamentId={id} />
         )}
       </div>
+
+      {/* Chat Components */}
+      <ChatToggle 
+        isOpen={chatOpen} 
+        onToggle={() => setChatOpen(!chatOpen)} 
+      />
+      <ChatSidebar 
+        tournamentId={id} 
+        isOpen={chatOpen} 
+        onToggle={() => setChatOpen(false)} 
+      />
     </div>
   )
 }

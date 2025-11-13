@@ -52,4 +52,11 @@ export const matchAPI = {
   getAdvanceableMatches: (tournamentId) => api.get(`/matches/advanceable_matches/?tournament_id=${tournamentId}`)
 }
 
+export const chatAPI = {
+  getMessages: (tournamentId) => api.get(`/messages/?tournament=${tournamentId}`),
+  sendMessage: (data) => api.post('/messages/', data),
+  getRoom: (tournamentId) => api.get(`/rooms/by-tournament/?tournament=${tournamentId}`),
+  createRoom: (data) => api.post('/rooms/', data)
+}
+
 export default api

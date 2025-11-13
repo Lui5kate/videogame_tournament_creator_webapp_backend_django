@@ -3,6 +3,7 @@ import Dashboard from './pages/Dashboard'
 import Tournament from './pages/Tournament'
 import Teams from './pages/Teams'
 import Brackets from './pages/Brackets'
+import Chat from './pages/Chat'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/tournaments/:id" element={<Tournament />} />
           <Route path="/tournaments/:id/teams" element={<Teams />} />
           <Route path="/tournaments/:id/brackets" element={<Brackets />} />
+          <Route path="/tournaments/:id/chat" element={<Chat />} />
         </Routes>
       </main>
     </div>

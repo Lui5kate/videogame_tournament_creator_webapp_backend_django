@@ -3,12 +3,15 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { tournamentAPI } from '../services/api'
 import TournamentEditModal from '../components/tournament/TournamentEditModal'
+import ChatSidebar from '../components/chat/ChatSidebar'
+import ChatToggle from '../components/chat/ChatToggle'
 
 export default function Tournament() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
   const queryClient = useQueryClient()
   
   const { data: tournament, isLoading } = useQuery({
@@ -142,12 +145,15 @@ export default function Tournament() {
           <div className="text-secondary font-pixel mt-2">{tournament.completed_matches_count} completadas</div>
         </Link>
 
-        <div className="bg-surface border-2 border-gray-600 rounded-lg p-6 text-center opacity-50">
+        <Link 
+          to={`/tournaments/${id}/chat`}
+          className="bg-surface border-2 border-accent hover:border-primary rounded-lg p-6 text-center transition-colors group"
+        >
           <div className="text-4xl mb-3">💬</div>
-          <h3 className="text-xl font-pixel text-gray-400">Chat</h3>
-          <p className="text-gray-500 mt-2">Próximamente</p>
-          <div className="text-gray-500 font-pixel mt-2">En desarrollo</div>
-        </div>
+          <h3 className="text-xl font-pixel text-white group-hover:text-primary">Chat</h3>
+          <p className="text-gray-400 mt-2">Chat en vivo del torneo</p>
+          <div className="text-accent font-pixel mt-2">Disponible</div>
+        </Link>
       </div>
 
       {/* Acciones rápidas */}
@@ -215,6 +221,17 @@ export default function Tournament() {
           </div>
         </div>
       )}
+
+      {/* Chat Components */}
+      <ChatToggle 
+        isOpen={chatOpen} 
+        onToggle={() => setChatOpen(!chatOpen)} 
+      />
+      <ChatSidebar 
+        tournamentId={id} 
+        isOpen={chatOpen} 
+        onToggle={() => setChatOpen(false)} 
+      />
     </div>
   )
 }

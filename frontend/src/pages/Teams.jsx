@@ -5,10 +5,13 @@ import { teamAPI, tournamentAPI } from '../services/api'
 import TeamRegistrationForm from '../components/teams/TeamRegistrationForm'
 import TeamCard from '../components/teams/TeamCard'
 import TeamEditModal from '../components/teams/TeamEditModal'
+import ChatSidebar from '../components/chat/ChatSidebar'
+import ChatToggle from '../components/chat/ChatToggle'
 
 export default function Teams() {
   const { id: tournamentId } = useParams()
   const [editingTeam, setEditingTeam] = useState(null)
+  const [chatOpen, setChatOpen] = useState(false)
   const queryClient = useQueryClient()
 
   const { data: tournament } = useQuery({
@@ -149,6 +152,17 @@ export default function Teams() {
           isLoading={updateTeamMutation.isPending || deleteTeamMutation.isPending}
         />
       )}
+
+      {/* Chat Components */}
+      <ChatToggle 
+        isOpen={chatOpen} 
+        onToggle={() => setChatOpen(!chatOpen)} 
+      />
+      <ChatSidebar 
+        tournamentId={tournamentId} 
+        isOpen={chatOpen} 
+        onToggle={() => setChatOpen(false)} 
+      />
     </div>
   )
 }

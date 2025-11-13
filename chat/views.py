@@ -29,9 +29,8 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
         if message_type:
             queryset = queryset.filter(message_type=message_type)
         
-        # Limitar a los últimos 100 mensajes por defecto
-        limit = int(self.request.query_params.get('limit', 100))
-        return queryset.order_by('-created_at')[:limit]
+        # Mostrar todos los mensajes sin límite
+        return queryset.order_by('-created_at')
     
     def create(self, request, *args, **kwargs):
         """Crear nuevo mensaje de chat"""
@@ -47,12 +46,12 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
         )
         
         # Limpiar mensajes antiguos si es necesario
-        try:
-            chat_room = message.tournament.chat_room
-            chat_room.clean_old_messages()
-        except ChatRoom.DoesNotExist:
-            # Crear sala de chat si no existe
-            ChatRoom.objects.create(tournament=message.tournament)
+        # try:
+        #     chat_room = message.tournament.chat_room
+        #     chat_room.clean_old_messages()
+        # except ChatRoom.DoesNotExist:
+        #     # Crear sala de chat si no existe
+        #     ChatRoom.objects.create(tournament=message.tournament)
         
         return Response(
             ChatMessageSerializer(message).data,
