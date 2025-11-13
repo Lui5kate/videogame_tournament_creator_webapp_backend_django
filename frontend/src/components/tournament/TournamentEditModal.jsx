@@ -35,7 +35,7 @@ export default function TournamentEditModal({ tournament, onClose, onSave, onDel
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full p-3 bg-background border-2 border-accent rounded text-blue-300 placeholder-gray-500"
+              className="w-full p-3 bg-background border-2 border-accent rounded text-blue-500 placeholder-gray-500"
               required
             />
           </div>
@@ -45,7 +45,7 @@ export default function TournamentEditModal({ tournament, onClose, onSave, onDel
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full p-3 bg-background border-2 border-accent rounded text-blue-300 placeholder-gray-500 h-20 resize-none"
+              className="w-full p-3 bg-background border-2 border-accent rounded text-blue-500 placeholder-gray-500 h-20 resize-none"
               placeholder="Descripción del torneo..."
             />
           </div>
@@ -56,7 +56,7 @@ export default function TournamentEditModal({ tournament, onClose, onSave, onDel
               <select
                 value={formData.tournament_type}
                 onChange={(e) => setFormData({ ...formData, tournament_type: e.target.value })}
-                className="w-full p-3 bg-background border-2 border-accent rounded text-gray-300"
+                className="w-full p-3 bg-background border-2 border-accent rounded text-blue-500"
               >
                 <option value="single">Eliminación Simple</option>
                 <option value="double">Eliminación Doble</option>
@@ -69,7 +69,7 @@ export default function TournamentEditModal({ tournament, onClose, onSave, onDel
                 type="number"
                 value={formData.max_teams}
                 onChange={(e) => setFormData({ ...formData, max_teams: parseInt(e.target.value) })}
-                className="w-full p-3 bg-background border-2 border-accent rounded text-gray-300"
+                className="w-full p-3 bg-background border-2 border-accent rounded text-blue-500"
                 min="2"
                 max="32"
                 required
@@ -84,7 +84,7 @@ export default function TournamentEditModal({ tournament, onClose, onSave, onDel
                 type="number"
                 value={formData.points_per_win}
                 onChange={(e) => setFormData({ ...formData, points_per_win: parseInt(e.target.value) })}
-                className="w-full p-3 bg-background border-2 border-accent rounded text-gray-300"
+                className="w-full p-3 bg-background border-2 border-accent rounded text-blue-500"
                 min="1"
                 required
               />
@@ -96,7 +96,7 @@ export default function TournamentEditModal({ tournament, onClose, onSave, onDel
                 type="number"
                 value={formData.points_per_participation}
                 onChange={(e) => setFormData({ ...formData, points_per_participation: parseInt(e.target.value) })}
-                className="w-full p-3 bg-background border-2 border-accent rounded text-gray-300"
+                className="w-full p-3 bg-background border-2 border-accent rounded text-blue-500"
                 min="0"
                 required
               />

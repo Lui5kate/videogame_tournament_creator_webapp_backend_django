@@ -1,9 +1,9 @@
-# 🎮 Estado del Proyecto - Torneo Gaming v2.2
+# 🎮 Estado del Proyecto - Videogame Tournament Maker v2.3
 
 ## 📊 **RESUMEN EJECUTIVO**
 - **Estado:** ✅ **BACKEND + FRONTEND COMPLETADOS**
-- **Progreso:** **98% COMPLETADO**
-- **Última actualización:** 14 Noviembre 2025
+- **Progreso:** **99% COMPLETADO**
+- **Última actualización:** 13 Noviembre 2025
 - **Funcionalidades principales:** ✅ IMPLEMENTADAS
 
 ---
@@ -13,21 +13,23 @@
 ### **🔧 Backend (Django REST API)**
 - ✅ **Sistema de Autenticación** - JWT con roles (admin/player)
 - ✅ **Gestión de Torneos** - CRUD completo con generación automática de equipos
-- ✅ **Sistema de Equipos** - Asignación profesional de jugadores
-- ✅ **Gestión de Usuarios** - Perfiles completos con asignación a torneos
-- ✅ **API REST Completa** - Todos los endpoints implementados
+- ✅ **Sistema de Equipos** - Asignación profesional de jugadores por torneo específico
+- ✅ **Gestión de Usuarios** - Perfiles completos con asignación independiente por torneo
+- ✅ **API REST Completa** - Todos los endpoints implementados con permisos
 - ✅ **Chat en Vivo** - Mensajes del sistema y celebraciones
 - ✅ **Brackets** - Generación automática y seguimiento
 - ✅ **Base de Datos** - Modelos optimizados con relaciones
+- ✅ **Permisos de Admin** - Endpoints protegidos para funciones administrativas
 
 ### **🎨 Frontend (React + Vite)**
 - ✅ **Autenticación Completa** - Login/Register con JWT
 - ✅ **Dashboard Profesional** - Vista diferenciada admin/jugador
 - ✅ **Gestión de Torneos** - Creación y administración
 - ✅ **Sistema de Equipos** - Asignación de jugadores con dropdowns
-- ✅ **Chat en Tiempo Real** - Interfaz completa con autenticación
+- ✅ **Chat en Tiempo Real** - Interfaz completa en todas las vistas del torneo
 - ✅ **Navegación Fluida** - Rutas protegidas y headers consistentes
-- ✅ **Diseño Arcade** - Tema gaming profesional
+- ✅ **Diseño Arcade** - Tema gaming profesional con branding consistente
+- ✅ **UX Diferenciada** - Botones y textos específicos por rol (admin/jugador)
 - ✅ **Responsive Design** - Adaptable a dispositivos
 - ✅ **Experiencia Diferenciada** - Interfaces específicas por rol de usuario
 
@@ -82,6 +84,22 @@ frontend/
 │   ├── services/    ✅ API calls
 │   └── styles/      ✅ Tema arcade
 ```
+
+---
+
+## 🆕 **CAMBIOS RECIENTES (v2.3)**
+
+### **🔧 Backend**
+- ✅ **Torneos Independientes** - Cada torneo maneja sus propios jugadores sin conflictos
+- ✅ **Filtrado por Torneo** - Teams API ahora filtra correctamente por torneo específico
+- ✅ **Permisos de Admin** - Endpoint `/tournaments/{id}/start/` protegido solo para admins
+- ✅ **Jugadores Disponibles** - Lógica mejorada para mostrar jugadores no asignados al torneo específico
+
+### **🎨 Frontend**
+- ✅ **Branding Consistente** - "🎮 Videogame Tournament Maker" en todas las páginas
+- ✅ **UX por Roles** - Botones diferenciados: "👥 Gestionar Equipos" (admin) vs "🎯 MI PARTICIPACIÓN" (jugador)
+- ✅ **Permisos UI** - Botón "Iniciar Torneo" solo visible para administradores
+- ✅ **Chat Universal** - Sidebar de chat disponible en todas las vistas del torneo (Teams, Brackets, etc.)
 
 ---
 

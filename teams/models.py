@@ -19,6 +19,12 @@ class Team(models.Model):
         verbose_name="Nombre del Equipo"
     )
     
+    # Control de cambio de nombre
+    name_changed = models.BooleanField(
+        default=False,
+        verbose_name="Nombre ya fue cambiado"
+    )
+    
     # Sistema de fotos flexible
     team_photo = models.ImageField(
         upload_to=team_photo_path, 

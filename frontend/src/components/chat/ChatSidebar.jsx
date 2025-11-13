@@ -1,28 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '../../hooks/useAuth.jsx'
 import { chatAPI } from '../../services/api'
 
 export default function ChatSidebar({ tournamentId, isOpen, onToggle }) {
   const [message, setMessage] = useState('')
-  const [username, setUsername] = useState('')
-  const [isUsernameSet, setIsUsernameSet] = useState(false)
   const messagesEndRef = useRef(null)
   const queryClient = useQueryClient()
-
-  // Load username from localStorage
-  useEffect(() => {
-    const savedUsername = localStorage.getItem('chat_username')
-    if (savedUsername) {
-      setUsername(savedUsername)
-      setIsUsernameSet(true)
-    }
-  }, [])
+  const { user } = useAuth()
 
   const { data: messages = [], refetch } = useQuery({
     queryKey: ['chat-messages', tournamentId],
     queryFn: () => chatAPI.getMessages(parseInt(tournamentId)).then(res => {
-      return res.data.reverse()
+      return res.data
     }),
     refetchInterval: 2000,
     enabled: isOpen
@@ -41,18 +32,10 @@ export default function ChatSidebar({ tournamentId, isOpen, onToggle }) {
 
   const handleSendMessage = (e) => {
     e.preventDefault()
-    if (!message.trim()) return
+    if (!message.trim() || !user) return
 
-    if (!isUsernameSet) {
-      if (!username.trim() || username.trim().length < 2) return
-      localStorage.setItem('chat_username', username.trim())
-      setIsUsernameSet(true)
-    }
-
-    const tournamentIdNum = parseInt(tournamentId)
     sendMessageMutation.mutate({
-      tournament: tournamentIdNum,
-      username: username.trim(),
+      tournament: parseInt(tournamentId),
       message: message.trim()
     })
   }
@@ -110,7 +93,7 @@ export default function ChatSidebar({ tournamentId, isOpen, onToggle }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
                   <span className="font-bold text-accent pixel-font text-xs truncate">
-                    {msg.username}
+                    {msg.display_name}
                   </span>
                   <span className="text-gray-500 text-xs">
                     {new Date(msg.created_at).toLocaleTimeString('es-ES', { 
@@ -118,6 +101,11 @@ export default function ChatSidebar({ tournamentId, isOpen, onToggle }) {
                       minute: '2-digit' 
                     })}
                   </span>
+                  {msg.user_type === 'admin' && (
+                    <span className="text-xs bg-accent/20 text-accent px-1 rounded pixel-font">
+                      👑
+                    </span>
+                  )}
                 </div>
                 <div className="text-white text-xs break-words">{msg.message}</div>
               </div>
@@ -130,40 +118,30 @@ export default function ChatSidebar({ tournamentId, isOpen, onToggle }) {
       {/* Input */}
       <div className="border-t border-primary/30 p-3">
         <form onSubmit={handleSendMessage} className="space-y-2">
-          {!isUsernameSet && (
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Tu nombre..."
-              className="w-full p-2 bg-background border border-accent rounded text-blue-600 placeholder-gray-500 pixel-font text-xs"
-              autoComplete="off"
-              minLength={2}
-              required
-            />
-          )}
           <div className="flex gap-2">
             <input
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Mensaje..."
-              className="flex-1 p-2 bg-background border border-primary rounded text-blue-600 placeholder-gray-500 text-xs"
+              className="flex-1 p-2 bg-background border border-primary rounded text-blue-500 placeholder-gray-500 text-xs"
               autoComplete="off"
-              disabled={sendMessageMutation.isPending}
+              disabled={sendMessageMutation.isPending || !user}
               required
             />
             <button
               type="submit"
-              disabled={sendMessageMutation.isPending || !message.trim()}
+              disabled={sendMessageMutation.isPending || !message.trim() || !user}
               className="bg-gradient-to-r from-primary to-secondary text-white px-3 py-2 rounded pixel-font text-xs hover:shadow-lg transition-all duration-200 disabled:opacity-50"
             >
               🚀
             </button>
           </div>
-          {isUsernameSet && (
+          {user && (
             <div className="text-xs text-gray-400 pixel-font">
-              Como: <span className="text-accent">{username}</span>
+              Como: <span className="text-accent">
+                {user.profile ? `${user.profile.first_name} ${user.profile.last_name}` : user.username}
+              </span>
             </div>
           )}
         </form>

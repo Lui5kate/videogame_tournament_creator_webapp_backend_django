@@ -24,7 +24,7 @@
   }
   
   .input-field {
-    @apply bg-dark-light border border-primary/30 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:border-primary focus:outline-none;
+    @apply bg-dark-light border border-primary/30 rounded-lg px-3 py-2 text-blue-500 placeholder-gray-400 focus:border-primary focus:outline-none;
   }
 
   .pixel-font {

@@ -47,7 +47,7 @@ const Login = () => {
         {/* Logo/Título */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400 mb-2 pixel-font">
-            🎮 TORNEO
+            Videogame Tournament Maker
           </h1>
           <p className="text-gray-300 text-sm">Inicia sesión para continuar</p>
         </div>
@@ -65,7 +65,7 @@ const Login = () => {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-slate-700/50 border-2 border-slate-600 rounded-lg text-white placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-200"
+                className="w-full px-4 py-3 bg-slate-700/50 border-2 border-slate-600 rounded-lg text-blue-500 placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-200"
                 placeholder="Ingresa tu usuario"
                 required
               />
@@ -81,7 +81,7 @@ const Login = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-slate-700/50 border-2 border-slate-600 rounded-lg text-white placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-200"
+                className="w-full px-4 py-3 bg-slate-700/50 border-2 border-slate-600 rounded-lg text-blue-500 placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-200"
                 placeholder="Ingresa tu contraseña"
                 required
               />

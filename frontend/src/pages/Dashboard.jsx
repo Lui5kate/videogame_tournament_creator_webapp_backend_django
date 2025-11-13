@@ -32,7 +32,7 @@ export default function Dashboard() {
         <div className="container mx-auto flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400 pixel-font">
-              🎮 TORNEO GAMING
+              🎮 Videogame Tournament Maker
             </h1>
             <p className="text-gray-300 text-sm mt-1">
               Bienvenido, {user?.profile?.first_name || user?.username} 

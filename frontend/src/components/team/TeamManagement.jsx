@@ -81,7 +81,7 @@ export default function TeamManagement({ tournamentId }) {
               <select
                 value={selectedPlayer}
                 onChange={(e) => setSelectedPlayer(e.target.value)}
-                className="w-full bg-slate-700 border-2 border-slate-600 rounded-lg px-3 py-2 text-white focus:border-orange-500 focus:outline-none"
+                className="w-full bg-slate-700 border-2 border-slate-600 rounded-lg px-3 py-2 text-blue-500 focus:border-orange-500 focus:outline-none"
                 required
               >
                 <option value="">Seleccionar jugador...</option>
@@ -103,7 +103,7 @@ export default function TeamManagement({ tournamentId }) {
               <select
                 value={selectedTeam}
                 onChange={(e) => setSelectedTeam(e.target.value)}
-                className="w-full bg-slate-700 border-2 border-slate-600 rounded-lg px-3 py-2 text-white focus:border-orange-500 focus:outline-none"
+                className="w-full bg-slate-700 border-2 border-slate-600 rounded-lg px-3 py-2 text-blue-500 focus:border-orange-500 focus:outline-none"
                 required
               >
                 <option value="">Seleccionar equipo...</option>

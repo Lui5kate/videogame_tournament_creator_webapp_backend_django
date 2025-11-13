@@ -97,7 +97,7 @@ const Register = () => {
                   name="first_name"
                   value={formData.first_name}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-slate-700/50 border-2 border-slate-600 rounded-lg text-white placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-200"
+                  className="w-full px-4 py-3 bg-slate-700/50 border-2 border-slate-600 rounded-lg text-blue-500 placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-200"
                   placeholder="Tu nombre"
                   required
                 />
@@ -112,7 +112,7 @@ const Register = () => {
                   name="last_name"
                   value={formData.last_name}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-slate-700/50 border-2 border-slate-600 rounded-lg text-white placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-200"
+                  className="w-full px-4 py-3 bg-slate-700/50 border-2 border-slate-600 rounded-lg text-blue-500 placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-200"
                   placeholder="Tu apellido"
                   required
                 />
@@ -130,7 +130,7 @@ const Register = () => {
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-slate-700/50 border-2 border-slate-600 rounded-lg text-white placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-200"
+                  className="w-full px-4 py-3 bg-slate-700/50 border-2 border-slate-600 rounded-lg text-blue-500 placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-200"
                   placeholder="Nombre de usuario"
                   required
                 />
@@ -145,7 +145,7 @@ const Register = () => {
                   name="attuid"
                   value={formData.attuid}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-slate-700/50 border-2 border-slate-600 rounded-lg text-white placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-200"
+                  className="w-full px-4 py-3 bg-slate-700/50 border-2 border-slate-600 rounded-lg text-blue-500 placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-200"
                   placeholder="Código alfanumérico"
                   required
                 />
@@ -162,7 +162,7 @@ const Register = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-slate-700/50 border-2 border-slate-600 rounded-lg text-white placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-200"
+                className="w-full px-4 py-3 bg-slate-700/50 border-2 border-slate-600 rounded-lg text-blue-500 placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all duration-200"
                 placeholder="Mínimo 6 caracteres"
                 required
                 minLength={6}

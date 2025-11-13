@@ -1,12 +1,18 @@
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth.jsx'
 import { tournamentAPI, teamAPI } from '../services/api'
 import TeamManagement from '../components/team/TeamManagement'
+import ChangeTeamName from '../components/team/ChangeTeamName'
+import ChatSidebar from '../components/chat/ChatSidebar'
+import ChatToggle from '../components/chat/ChatToggle'
 
 export default function Teams() {
   const { id: tournamentId } = useParams()
   const { isAdmin, user, logout } = useAuth()
+  const [showChangeNameModal, setShowChangeNameModal] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
 
   const { data: tournament, isLoading } = useQuery({
     queryKey: ['tournament', tournamentId],
@@ -19,10 +25,20 @@ export default function Teams() {
     enabled: !isAdmin()
   })
 
-  // Encontrar el equipo del jugador actual
-  const userTeam = teams.find(team => 
+  // Obtener equipo del usuario (para jugadores)
+  const { data: myTeamData } = useQuery({
+    queryKey: ['my-team', tournamentId],
+    queryFn: () => teamAPI.getMyTeam(tournamentId).then(res => res.data),
+    enabled: !isAdmin(),
+    retry: false
+  })
+
+  // Encontrar el equipo del jugador actual (fallback)
+  const userTeam = myTeamData?.team || teams.find(team => 
     team.players?.some(player => player.user_info?.id === user?.id)
   )
+
+  const isCaptain = myTeamData?.is_captain || false
 
   if (isLoading) {
     return (
@@ -55,7 +71,7 @@ export default function Teams() {
         <div className="container mx-auto flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400 pixel-font">
-              🎮 TORNEO GAMING
+              🎮 Videogame Tournament Maker
             </h1>
             <p className="text-gray-300 text-sm mt-1">
               Bienvenido, {user?.profile?.first_name || user?.username} 
@@ -121,18 +137,45 @@ export default function Teams() {
             tournament={tournament} 
             teams={teams} 
             userTeam={userTeam} 
-            user={user} 
+            user={user}
+            isCaptain={isCaptain}
+            showChangeNameModal={showChangeNameModal}
+            setShowChangeNameModal={setShowChangeNameModal}
           />
         )}
       </main>
+
+      {/* Chat Components */}
+      <ChatToggle 
+        isOpen={chatOpen} 
+        onToggle={() => setChatOpen(!chatOpen)} 
+      />
+      <ChatSidebar 
+        tournamentId={tournamentId} 
+        isOpen={chatOpen} 
+        onToggle={() => setChatOpen(false)} 
+      />
     </div>
   )
 }
 
 // Componente para vista de jugador
-function PlayerView({ tournament, teams, userTeam, user }) {
+function PlayerView({ tournament, teams, userTeam, user, isCaptain, showChangeNameModal, setShowChangeNameModal }) {
   return (
     <div className="space-y-6">
+      {/* Modal para cambiar nombre */}
+      {showChangeNameModal && userTeam && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="max-w-md w-full">
+            <ChangeTeamName 
+              team={userTeam}
+              isCaptain={isCaptain}
+              onClose={() => setShowChangeNameModal(false)}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Estado del jugador */}
       <div className="bg-slate-800/50 backdrop-blur-sm border-2 border-orange-500/30 rounded-lg p-6">
         <h3 className="text-xl font-bold text-orange-400 mb-4 pixel-font">
@@ -149,9 +192,37 @@ function PlayerView({ tournament, teams, userTeam, user }) {
                 <p className="text-gray-300 mt-2">
                   Ya tienes equipo asignado. ¡Prepárate para competir!
                 </p>
+                {isCaptain && (
+                  <p className="text-yellow-400 text-sm mt-1">
+                    👑 Eres el capitán del equipo
+                  </p>
+                )}
               </div>
               <div className="text-4xl">🎮</div>
             </div>
+            
+            {/* Botón para cambiar nombre (solo capitanes) */}
+            {isCaptain && !userTeam.name_changed && (
+              <div className="mt-4 pt-4 border-t border-green-500/30">
+                <button
+                  onClick={() => setShowChangeNameModal(true)}
+                  className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 pixel-font flex items-center gap-2"
+                >
+                  ✏️ Cambiar Nombre del Equipo
+                </button>
+                <p className="text-xs text-gray-400 mt-1">
+                  Solo puedes cambiar el nombre una vez
+                </p>
+              </div>
+            )}
+
+            {userTeam.name_changed && (
+              <div className="mt-4 pt-4 border-t border-green-500/30">
+                <p className="text-gray-400 text-sm">
+                  ✅ El nombre del equipo ya fue personalizado
+                </p>
+              </div>
+            )}
             
             {/* Información del equipo */}
             <div className="mt-4 pt-4 border-t border-green-500/30">

@@ -58,7 +58,9 @@ export const teamAPI = {
   }),
   getAvailablePlayers: (tournamentId) => api.get(`/teams/available-players/?tournament=${tournamentId}`),
   assignPlayer: (data) => api.post('/teams/assign-player/', data),
-  removePlayer: (teamId, userId) => api.delete(`/teams/remove-player/${teamId}/${userId}/`)
+  removePlayer: (teamId, userId) => api.delete(`/teams/remove-player/${teamId}/${userId}/`),
+  changeTeamName: (data) => api.post('/teams/change-team-name/', data),
+  getMyTeam: (tournamentId) => api.get(`/teams/my-team/?tournament=${tournamentId}`)
 }
 
 export const gameAPI = {

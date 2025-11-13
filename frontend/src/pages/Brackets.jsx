@@ -79,7 +79,7 @@ export default function Brackets() {
         <div className="container mx-auto flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400 pixel-font">
-              🎮 TORNEO GAMING
+              🎮 Videogame Tournament Maker
             </h1>
             <p className="text-gray-300 text-sm mt-1">
               Bienvenido, {user?.profile?.first_name || user?.username} 
@@ -114,7 +114,7 @@ export default function Brackets() {
                 to={`/tournaments/${id}/teams`}
                 className="bg-secondary/20 hover:bg-secondary/40 text-secondary px-4 py-2 rounded pixel-font text-sm transition-all duration-200 hover:scale-105"
               >
-                👥 Equipos
+                {isAdmin() ? '👥 Equipos' : '🎯 MI PARTICIPACIÓN'}
               </Link>
             </div>
           </div>
@@ -137,7 +137,7 @@ export default function Brackets() {
               </div>
             </div>
             
-            {canStartTournament && (
+            {canStartTournament && isAdmin() && (
               <button
                 onClick={handleStartTournament}
                 disabled={startTournamentMutation.isPending}
@@ -167,7 +167,7 @@ export default function Brackets() {
               to={`/tournaments/${id}/teams`}
               className="bg-gradient-to-r from-primary to-secondary text-white px-6 py-3 rounded-lg pixel-font text-sm hover:shadow-lg hover:shadow-primary/50 transition-all duration-200 hover:scale-105 inline-block"
             >
-              👥 Registrar Equipos
+              {isAdmin() ? '👥 Registrar Equipos' : '🎯 MI PARTICIPACIÓN'}
             </Link>
           </div>
         ) : tournament.status === 'registration' ? (
@@ -195,9 +195,9 @@ export default function Brackets() {
                 to={`/tournaments/${id}/teams`}
                 className="bg-gradient-to-r from-secondary to-accent text-white px-6 py-3 rounded-lg pixel-font text-sm hover:shadow-lg hover:shadow-secondary/50 transition-all duration-200 hover:scale-105"
               >
-                👥 Gestionar Equipos
+                {isAdmin() ? '👥 Gestionar Equipos' : '🎯 MI PARTICIPACIÓN'}
               </Link>
-              {canStartTournament && (
+              {canStartTournament && isAdmin() && (
                 <button
                   onClick={handleStartTournament}
                   disabled={startTournamentMutation.isPending}

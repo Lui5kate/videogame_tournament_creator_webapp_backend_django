@@ -28,11 +28,11 @@ class TeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
         fields = [
-            'id', 'name', 'team_photo', 'wins', 'losses', 'points',
+            'id', 'name', 'name_changed', 'team_photo', 'wins', 'losses', 'points',
             'bracket_status', 'created_at', 'matches_played', 'win_rate',
             'tournament', 'tournament_name', 'players'
         ]
-        read_only_fields = ['wins', 'losses', 'points', 'bracket_status', 'created_at']
+        read_only_fields = ['wins', 'losses', 'points', 'bracket_status', 'created_at', 'name_changed']
 
 class AssignPlayerSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
@@ -163,7 +163,7 @@ class TeamWithPlayersSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
         fields = [
-            'id', 'name', 'team_photo', 'wins', 'losses', 'points',
+            'id', 'name', 'name_changed', 'team_photo', 'wins', 'losses', 'points',
             'bracket_status', 'created_at', 'matches_played', 'win_rate',
             'players'
         ]

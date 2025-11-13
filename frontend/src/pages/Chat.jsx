@@ -144,7 +144,7 @@ export default function Chat() {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Escribe tu mensaje..."
-            className="flex-1 bg-background border-2 border-primary/30 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:border-primary focus:outline-none"
+            className="flex-1 bg-background border-2 border-primary/30 rounded-lg px-4 py-2 text-blue-500 placeholder-gray-400 focus:border-primary focus:outline-none"
             disabled={sendMessageMutation.isLoading}
           />
           <button

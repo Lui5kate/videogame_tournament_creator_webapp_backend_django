@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from .models import Tournament
 from .serializers import (
@@ -9,6 +10,7 @@ from .serializers import (
     TournamentDetailSerializer
 )
 from brackets.models import BracketGenerator
+from users.permissions import IsAdminUser
 
 class TournamentViewSet(viewsets.ModelViewSet):
     queryset = Tournament.objects.all()
@@ -45,7 +47,7 @@ class TournamentViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED
         )
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
     def start(self, request, pk=None):
         """Iniciar torneo y generar brackets"""
         tournament = self.get_object()
