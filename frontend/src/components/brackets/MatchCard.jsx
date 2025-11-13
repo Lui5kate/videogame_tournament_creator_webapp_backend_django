@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '../../hooks/useAuth'
 import { matchAPI } from '../../services/api'
 
 export default function MatchCard({ match, tournamentId, disabled = false }) {
   const [isLoading, setIsLoading] = useState(false)
+  const { isAdmin } = useAuth()
   const queryClient = useQueryClient()
 
   const declareWinnerMutation = useMutation({
@@ -27,7 +29,7 @@ export default function MatchCard({ match, tournamentId, disabled = false }) {
   })
 
   const handleDeclareWinner = (winnerId) => {
-    if (disabled) return
+    if (disabled || !isAdmin()) return
     
     setIsLoading(true)
     declareWinnerMutation.mutate({
@@ -37,7 +39,7 @@ export default function MatchCard({ match, tournamentId, disabled = false }) {
   }
 
   const handleManualAdvance = () => {
-    if (disabled) return
+    if (disabled || !isAdmin()) return
     
     setIsLoading(true)
     manualAdvanceMutation.mutate(match.id)
@@ -53,7 +55,6 @@ export default function MatchCard({ match, tournamentId, disabled = false }) {
     
     const style = baseStyles[type] || 'border-gray-600 bg-gray-800/50'
     
-    // Si está deshabilitado, aplicar estilos de bloqueo
     if (disabled) {
       return `${style} opacity-50 grayscale`
     }
@@ -72,8 +73,10 @@ export default function MatchCard({ match, tournamentId, disabled = false }) {
   }
 
   const getTeamButtonStyle = (team, isWinner, isCompleted) => {
-    if (disabled) {
-      return 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
+    if (disabled || !isAdmin()) {
+      if (isWinner) return 'bg-green-600 text-white shadow-lg shadow-green-500/50 transform scale-105 cursor-default'
+      if (isCompleted) return 'bg-gray-700 text-gray-400 cursor-default'
+      return 'bg-surface text-white cursor-default'
     }
     
     if (isWinner) return 'bg-green-600 text-white shadow-lg shadow-green-500/50 transform scale-105'
@@ -82,7 +85,7 @@ export default function MatchCard({ match, tournamentId, disabled = false }) {
   }
 
   const canDeclareWinner = (team) => {
-    return !disabled && team && match.status === 'pending' && match.team1 && match.team2 && !isLoading
+    return !disabled && isAdmin() && team && match.status === 'pending' && match.team1 && match.team2 && !isLoading
   }
 
   const isOrphanedMatch = () => {
@@ -90,7 +93,7 @@ export default function MatchCard({ match, tournamentId, disabled = false }) {
   }
 
   const canManualAdvance = () => {
-    return !disabled && isOrphanedMatch() && !isLoading
+    return !disabled && isAdmin() && isOrphanedMatch() && !isLoading
   }
 
   return (
@@ -100,6 +103,7 @@ export default function MatchCard({ match, tournamentId, disabled = false }) {
         <span className="text-sm font-bold text-accent pixel-font">
           {getBracketTypeLabel(match.bracket_type)} - R{match.round_number}
           {disabled && <span className="ml-2 text-red-400">🔒</span>}
+          {!isAdmin() && <span className="ml-2 text-blue-400">👁️</span>}
         </span>
         <span className="text-xs text-gray-400">
           Match #{match.match_number}
@@ -161,8 +165,8 @@ export default function MatchCard({ match, tournamentId, disabled = false }) {
         )}
       </div>
 
-      {/* Manual Advance Button for Orphaned Teams */}
-      {isOrphanedMatch() && (
+      {/* Manual Advance Button - Solo para admin */}
+      {isOrphanedMatch() && isAdmin() && (
         <div className="mt-3">
           <button
             onClick={handleManualAdvance}
@@ -181,6 +185,12 @@ export default function MatchCard({ match, tournamentId, disabled = false }) {
       {disabled && (
         <div className="text-center mt-3 text-red-400 pixel-font text-xs">
           🔒 Round bloqueado - Completa rounds anteriores primero
+        </div>
+      )}
+
+      {!isAdmin() && (
+        <div className="text-center mt-3 text-blue-400 pixel-font text-xs">
+          👁️ Solo visualización - Los admins gestionan las partidas
         </div>
       )}
 

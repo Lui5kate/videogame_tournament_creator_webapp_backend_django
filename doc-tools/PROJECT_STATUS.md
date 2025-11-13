@@ -1,9 +1,9 @@
-# 🎮 Estado del Proyecto - Torneo Gaming v2.1
+# 🎮 Estado del Proyecto - Torneo Gaming v2.2
 
 ## 📊 **RESUMEN EJECUTIVO**
 - **Estado:** ✅ **BACKEND + FRONTEND COMPLETADOS**
-- **Progreso:** **95% COMPLETADO**
-- **Última actualización:** 13 Noviembre 2024
+- **Progreso:** **98% COMPLETADO**
+- **Última actualización:** 14 Noviembre 2025
 - **Funcionalidades principales:** ✅ IMPLEMENTADAS
 
 ---
@@ -29,10 +29,18 @@
 - ✅ **Navegación Fluida** - Rutas protegidas y headers consistentes
 - ✅ **Diseño Arcade** - Tema gaming profesional
 - ✅ **Responsive Design** - Adaptable a dispositivos
+- ✅ **Experiencia Diferenciada** - Interfaces específicas por rol de usuario
 
 ---
 
-## 🎯 **NUEVAS FUNCIONALIDADES IMPLEMENTADAS**
+## 🎯 **NUEVAS FUNCIONALIDADES IMPLEMENTADAS (v2.2)**
+
+### **🎮 Experiencia Diferenciada por Rol de Usuario**
+- ✅ **Botones Contextuales** - "Gestionar Equipos" vs "Unirse al Torneo"
+- ✅ **Vista de Jugador** - Estado de asignación y equipos participantes
+- ✅ **Brackets Solo Lectura** - Jugadores pueden ver pero no modificar
+- ✅ **Controles Administrativos** - Botones de gestión solo para admins
+- ✅ **Indicadores Visuales** - Iconos que muestran el tipo de acceso
 
 ### **👥 Sistema de Asignación de Jugadores**
 - ✅ **Generación Automática de Equipos** - Al crear torneo
@@ -121,22 +129,29 @@ GET  /api/rooms/by-tournament/      ✅ Sala por torneo
 2. Login con JWT tokens
 3. Perfil personalizado con preferencias
 
-### **2. Creación de Torneo** ✅
+### **2. Creación de Torneo (Admin)** ✅
 1. Admin crea torneo (nombre, tipo, max equipos)
 2. Sistema genera equipos automáticamente (Equipo 1, 2, 3...)
 3. Sala de chat se crea automáticamente
 
-### **3. Asignación de Jugadores** ✅
+### **3. Asignación de Jugadores (Admin)** ✅
 1. Admin accede a "Gestionar Equipos"
 2. Ve lista de jugadores asignados al torneo
 3. Selecciona jugador y equipo desde dropdowns
 4. Asigna con validaciones automáticas
 5. Designa capitanes por equipo
 
-### **4. Gestión del Torneo** ✅
+### **4. Experiencia del Jugador** ✅
+1. Jugador hace clic en "Unirse al Torneo"
+2. Ve su estado de asignación (con equipo o esperando)
+3. Visualiza compañeros de equipo y otros participantes
+4. Accede a brackets en modo solo lectura
+5. Participa en chat en vivo
+
+### **5. Gestión del Torneo** ✅
 1. Navegación fluida entre secciones
 2. Chat en vivo con mensajes del sistema
-3. Brackets (en desarrollo avanzado)
+3. Brackets con control diferenciado por rol
 4. Seguimiento de estadísticas
 
 ---
@@ -218,9 +233,10 @@ npm run build
 ## 🏆 **LOGROS DEL PROYECTO**
 
 - ✅ **100% Backend Funcional** - API REST completa
-- ✅ **95% Frontend Completado** - Interfaz profesional
-- ✅ **Autenticación Robusta** - JWT con roles
-- ✅ **Sistema de Equipos** - Asignación profesional
+- ✅ **98% Frontend Completado** - Interfaz profesional con roles diferenciados
+- ✅ **Autenticación Robusta** - JWT con roles (admin/player)
+- ✅ **Sistema de Equipos** - Asignación profesional de jugadores
+- ✅ **Experiencia de Usuario** - Interfaces específicas por rol
 - ✅ **Chat Integrado** - Comunicación en tiempo real
 - ✅ **Diseño Arcade** - Tema gaming atractivo
 - ✅ **Código Limpio** - Arquitectura escalable
@@ -246,6 +262,7 @@ El sistema está completamente funcional con:
 - Backend robusto y escalable
 - Frontend profesional y responsive  
 - Sistema de asignación de jugadores
+- Experiencia diferenciada por rol de usuario
 - Chat en tiempo real
 - Navegación fluida
 - Diseño arcade atractivo
@@ -254,6 +271,6 @@ El sistema está completamente funcional con:
 
 ---
 
-*Última actualización: 13 Noviembre 2024*
-*Versión: 2.1*
+*Última actualización: 14 Noviembre 2025*
+*Versión: 2.2*
 *Estado: ✅ COMPLETADO*

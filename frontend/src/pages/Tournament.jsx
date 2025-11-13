@@ -163,8 +163,12 @@ export default function Tournament() {
           className="bg-surface border-2 border-accent hover:border-primary rounded-lg p-6 text-center transition-colors group"
         >
           <div className="text-4xl mb-3">👥</div>
-          <h3 className="text-xl font-pixel text-white group-hover:text-primary">Equipos</h3>
-          <p className="text-gray-400 mt-2">Registrar y gestionar equipos</p>
+          <h3 className="text-xl font-pixel text-white group-hover:text-primary">
+            {isAdmin() ? 'Gestionar Equipos' : 'Unirse al Torneo'}
+          </h3>
+          <p className="text-gray-400 mt-2">
+            {isAdmin() ? 'Registrar y gestionar equipos' : 'Ver tu equipo y participantes'}
+          </p>
           <div className="text-accent font-pixel mt-2">{tournament.registered_teams_count} registrados</div>
         </Link>
 
@@ -174,7 +178,9 @@ export default function Tournament() {
         >
           <div className="text-4xl mb-3">🏆</div>
           <h3 className="text-xl font-pixel text-white group-hover:text-primary">Brackets</h3>
-          <p className="text-gray-400 mt-2">Visualizar y gestionar partidas</p>
+          <p className="text-gray-400 mt-2">
+            {isAdmin() ? 'Visualizar y gestionar partidas' : 'Ver partidas del torneo'}
+          </p>
           <div className="text-secondary font-pixel mt-2">{tournament.completed_matches_count} completadas</div>
         </Link>
 

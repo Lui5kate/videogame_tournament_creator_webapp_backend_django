@@ -1,9 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useRef, useEffect } from 'react'
+import { useAuth } from '../../hooks/useAuth'
 import { matchAPI } from '../../services/api'
 import MatchCard from './MatchCard'
 
 export default function BracketVisualization({ tournamentId }) {
+  const { isAdmin } = useAuth()
   const queryClient = useQueryClient()
   const containerRef = useRef(null)
   const [zoomLevel, setZoomLevel] = useState(1)
@@ -218,15 +220,17 @@ export default function BracketVisualization({ tournamentId }) {
     <div className={containerClasses}>
       {/* Control Panel */}
       <div className="absolute top-4 right-4 z-10 flex gap-2">
-        {/* Cleanup Button */}
-        <button
-          onClick={handleCleanupTournament}
-          disabled={cleanupMutation.isPending}
-          className="w-12 h-12 bg-secondary/20 hover:bg-secondary/40 rounded-lg flex items-center justify-center text-white transition-all duration-200 hover:scale-110 border border-secondary/20 disabled:opacity-50"
-          title="Auto-avanzar equipos huérfanos"
-        >
-          {cleanupMutation.isPending ? '⚡' : '🧹'}
-        </button>
+        {/* Cleanup Button - Solo para admin */}
+        {isAdmin() && (
+          <button
+            onClick={handleCleanupTournament}
+            disabled={cleanupMutation.isPending}
+            className="w-12 h-12 bg-secondary/20 hover:bg-secondary/40 rounded-lg flex items-center justify-center text-white transition-all duration-200 hover:scale-110 border border-secondary/20 disabled:opacity-50"
+            title="Auto-avanzar equipos huérfanos"
+          >
+            {cleanupMutation.isPending ? '⚡' : '🧹'}
+          </button>
+        )}
 
         {/* Zoom Controls */}
         <div className="bg-surface/90 backdrop-blur-sm rounded-lg p-2 flex gap-1 border border-primary/20">
@@ -250,7 +254,7 @@ export default function BracketVisualization({ tournamentId }) {
           <button
             onClick={handleResetZoom}
             className="w-10 h-10 bg-secondary/20 hover:bg-secondary/40 rounded-lg flex items-center justify-center text-white transition-all duration-200 hover:scale-110"
-            title="Reset (0)"
+            title="Centrar"
           >
             ⌂
           </button>
