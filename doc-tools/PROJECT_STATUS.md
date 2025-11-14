@@ -1,10 +1,10 @@
-# 🎮 Estado del Proyecto - Videogame Tournament Maker v2.4
+# 🎮 Estado del Proyecto - Videogame Tournament Maker v2.5
 
 ## 📊 **RESUMEN EJECUTIVO**
 - **Estado:** ✅ **BACKEND + FRONTEND COMPLETADOS**
-- **Progreso:** **100% COMPLETADO**
-- **Última actualización:** 13 Noviembre 2025
-- **Funcionalidades principales:** ✅ IMPLEMENTADAS
+- **Progreso:** **100% COMPLETADO + ALGORITMO AVANZADO**
+- **Última actualización:** 14 Noviembre 2025
+- **Funcionalidades principales:** ✅ IMPLEMENTADAS + DISTRIBUCIÓN INTELIGENTE DE JUEGOS
 
 ---
 
@@ -21,6 +21,7 @@
 - ✅ **Brackets** - Generación automática y seguimiento con juegos asignados
 - ✅ **Base de Datos** - Modelos optimizados con relaciones
 - ✅ **Permisos de Admin** - Endpoints protegidos para funciones administrativas
+- ✅ **Distribución Inteligente de Juegos** - Algoritmo complejo para asignación equitativa
 
 ### **🎨 Frontend (React + Vite)**
 - ✅ **Autenticación Completa** - Login/Register con JWT
@@ -72,6 +73,8 @@ tournament_manager/
 ├── teams/          ✅ Equipos y asignación de jugadores
 ├── games/          ✅ Juegos disponibles
 ├── brackets/       ✅ Partidas y brackets
+│   ├── services.py ✅ Lógica de brackets mejorada
+│   └── game_distributor.py ✅ Algoritmo de distribución inteligente
 ├── chat/           ✅ Chat en vivo
 └── media/          ✅ Archivos subidos
 ```
@@ -86,6 +89,26 @@ frontend/
 │   ├── services/    ✅ API calls
 │   └── styles/      ✅ Tema arcade
 ```
+
+---
+
+## 🆕 **CAMBIOS RECIENTES (v2.5)**
+
+### **🎯 ALGORITMO INTELIGENTE DE DISTRIBUCIÓN DE JUEGOS**
+- ✅ **GameDistributor** - Distribución cíclica equitativa de juegos
+- ✅ **AdvancedGameDistributor** - Evita repeticiones consecutivas
+- ✅ **Distribución Balanceada** - Todos los juegos se usan antes de repetir
+- ✅ **Ciclos Automáticos** - Reinicia con orden aleatorio cuando se agotan
+- ✅ **Optimización por Tamaño** - Estrategias según número de partidas
+- ✅ **Estadísticas de Balance** - Reportes de distribución y score de balance
+- ✅ **Variedad Inteligente** - Previene repetir el mismo juego consecutivamente
+
+### **🔧 Mejoras Técnicas**
+- ✅ **Algoritmo Complejo** - Reemplaza asignación aleatoria simple
+- ✅ **Balance Score 100%** - Distribución perfectamente equitativa
+- ✅ **Fallback Robusto** - Manejo de errores si no hay juegos disponibles
+- ✅ **Integración Completa** - Funciona en eliminación simple y doble
+- ✅ **Script de Pruebas** - Verificación automática del algoritmo
 
 ---
 
@@ -270,6 +293,7 @@ npm run build
 - ✅ **Diseño Arcade** - Tema gaming atractivo
 - ✅ **Código Limpio** - Arquitectura escalable
 - ✅ **Documentación Completa** - APIs documentadas
+- ✅ **Algoritmo Inteligente** - Distribución equitativa de juegos con balance perfecto
 
 ---
 
@@ -301,5 +325,5 @@ El sistema está completamente funcional con:
 ---
 
 *Última actualización: 14 Noviembre 2025*
-*Versión: 2.2*
-*Estado: ✅ COMPLETADO*
+*Versión: 2.5*
+*Estado: ✅ COMPLETADO + ALGORITMO AVANZADO*

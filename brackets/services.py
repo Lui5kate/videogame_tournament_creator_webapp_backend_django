@@ -3,13 +3,14 @@ import math
 from django.db import models
 from .models import Match
 from games.models import Game
+from .game_distributor import GameDistributor, AdvancedGameDistributor
 
 class BracketGenerator:
     """Generador mejorado de brackets para torneos"""
     
     @staticmethod
     def generate_single_elimination(tournament):
-        """Generar bracket de eliminación simple"""
+        """Generar bracket de eliminación simple con distribución equitativa de juegos"""
         teams = list(tournament.teams.all())
         if len(teams) < 2:
             return False
@@ -17,11 +18,21 @@ class BracketGenerator:
         # Mezclar equipos aleatoriamente
         random.shuffle(teams)
         
-        # Obtener juegos disponibles
-        available_games = list(Game.objects.filter(is_active=True))
+        # Inicializar distribuidor de juegos
+        try:
+            game_distributor = AdvancedGameDistributor(tournament.id, 'variety_focused')
+            
+            # Calcular total de partidas para optimización
+            total_matches = BracketGenerator._calculate_single_elimination_matches(len(teams))
+            game_distributor.optimize_for_tournament_size(total_matches)
+            
+        except ValueError as e:
+            print(f"⚠️ Error al inicializar distribuidor de juegos: {e}")
+            return False
         
         round_number = 1
         current_teams = teams[:]
+        previous_games = []
         
         # Generar todas las rondas
         while len(current_teams) > 1:
@@ -39,8 +50,9 @@ class BracketGenerator:
                     team1 = current_teams[i]
                     team2 = None
                 
-                # Asignar juego aleatoriamente
-                game = random.choice(available_games) if available_games else None
+                # Asignar juego usando distribuidor inteligente
+                game = game_distributor.get_next_game_advanced(previous_games[-3:])  # Evitar repetir últimos 3
+                previous_games.append(game)
                 
                 match = Match.objects.create(
                     tournament=tournament,
@@ -73,11 +85,17 @@ class BracketGenerator:
             champion.bracket_status = 'champion'
             champion.save()
         
+        # Mostrar reporte de distribución
+        report = game_distributor.get_distribution_report()
+        print(f"🎮 Distribución de juegos completada:")
+        print(f"📊 Total partidas: {report['total_games_assigned']}")
+        print(f"🎯 Balance score: {report['balance_analysis'].get('balance_score', 0)}%")
+        
         return True
     
     @staticmethod
     def generate_double_elimination(tournament):
-        """Generar bracket de eliminación doble siguiendo lógica mejorada"""
+        """Generar bracket de eliminación doble con distribución equitativa de juegos"""
         teams = list(tournament.teams.all())
         n = len(teams)
         
@@ -90,13 +108,24 @@ class BracketGenerator:
         
         # Mezclar equipos aleatoriamente (seeding)
         random.shuffle(teams)
-        available_games = list(Game.objects.filter(is_active=True))
+        
+        # Inicializar distribuidor de juegos avanzado
+        try:
+            game_distributor = AdvancedGameDistributor(tournament.id, 'variety_focused')
+            
+            # Calcular total aproximado de partidas para optimización
+            total_matches = BracketGenerator._calculate_double_elimination_matches(n)
+            game_distributor.optimize_for_tournament_size(total_matches)
+            
+        except ValueError as e:
+            print(f"⚠️ Error al inicializar distribuidor de juegos: {e}")
+            return False
         
         if n == 2:
-            return BracketGenerator._generate_two_teams(tournament, teams, available_games)
+            return BracketGenerator._generate_two_teams(tournament, teams, game_distributor)
         
         if n == 3:
-            return BracketGenerator._generate_three_teams(tournament, teams, available_games)
+            return BracketGenerator._generate_three_teams(tournament, teams, game_distributor)
         
         # 2️⃣ CALCULAR BYES Y ESTRUCTURA BÁSICA
         next_power = 1
@@ -110,21 +139,26 @@ class BracketGenerator:
         distribution = BracketGenerator._distribute_byes(teams, byes)
         
         # 4️⃣ CONSTRUCCIÓN DE MATCHES EN WINNERS
-        BracketGenerator._build_winners_bracket(tournament, distribution, rounds_winners, available_games)
+        BracketGenerator._build_winners_bracket(tournament, distribution, rounds_winners, game_distributor)
         
         # 5️⃣ GENERAR LOSERS BRACKET
-        BracketGenerator._build_losers_bracket(tournament, rounds_winners, available_games)
+        BracketGenerator._build_losers_bracket(tournament, rounds_winners, game_distributor)
         
         # 6️⃣ CREAR ETAPA FINAL
-        BracketGenerator._create_finals_structure(tournament, available_games)
+        BracketGenerator._create_finals_structure(tournament, game_distributor)
+        
+        # 7️⃣ MOSTRAR REPORTE DE DISTRIBUCIÓN
+        report = game_distributor.get_distribution_report()
+        print(f"🎮 Distribución de juegos completada:")
+        print(f"📊 Total partidas: {report['total_games_assigned']}")
+        print(f"🎯 Balance score: {report['balance_analysis'].get('balance_score', 0)}%")
+        print(f"🔄 Ciclos utilizados: {report['cycles_completed']}")
         
         return True
     
     @staticmethod
-    def _generate_two_teams(tournament, teams, available_games):
-        """Caso especial: 2 equipos"""
-        game = random.choice(available_games) if available_games else None
-        
+    def _generate_two_teams(tournament, teams, game_distributor):
+        """Caso especial: 2 equipos con distribuidor de juegos"""
         # Winners R1
         Match.objects.create(
             tournament=tournament,
@@ -133,7 +167,7 @@ class BracketGenerator:
             bracket_type='winners',
             round_number=1,
             match_number=1,
-            game=game
+            game=game_distributor.get_next_game()
         )
         
         # Gran Final (ganador winners vs perdedor winners)
@@ -144,7 +178,7 @@ class BracketGenerator:
             bracket_type='grand_final',
             round_number=1,
             match_number=1,
-            game=random.choice(available_games) if available_games else None
+            game=game_distributor.get_next_game()
         )
         
         # Reset Final
@@ -155,14 +189,14 @@ class BracketGenerator:
             bracket_type='final_reset',
             round_number=1,
             match_number=1,
-            game=random.choice(available_games) if available_games else None
+            game=game_distributor.get_next_game()
         )
         
         return True
     
     @staticmethod
-    def _generate_three_teams(tournament, teams, available_games):
-        """Caso especial: 3 equipos"""
+    def _generate_three_teams(tournament, teams, game_distributor):
+        """Caso especial: 3 equipos con distribuidor de juegos"""
         # 1 bye automático al último equipo
         bye_team = teams[2]
         
@@ -174,7 +208,7 @@ class BracketGenerator:
             bracket_type='winners',
             round_number=1,
             match_number=1,
-            game=random.choice(available_games) if available_games else None
+            game=game_distributor.get_next_game()
         )
         
         # Winners R2: bye_team vs ganador R1
@@ -185,7 +219,7 @@ class BracketGenerator:
             bracket_type='winners',
             round_number=2,
             match_number=1,
-            game=random.choice(available_games) if available_games else None
+            game=game_distributor.get_next_game()
         )
         
         # Losers R1: perdedor Winners R2 vs perdedor Winners R1
@@ -196,7 +230,7 @@ class BracketGenerator:
             bracket_type='losers',
             round_number=1,
             match_number=1,
-            game=random.choice(available_games) if available_games else None
+            game=game_distributor.get_next_game()
         )
         
         # Gran Final
@@ -207,7 +241,7 @@ class BracketGenerator:
             bracket_type='grand_final',
             round_number=1,
             match_number=1,
-            game=random.choice(available_games) if available_games else None
+            game=game_distributor.get_next_game()
         )
         
         # Reset Final
@@ -218,10 +252,21 @@ class BracketGenerator:
             bracket_type='final_reset',
             round_number=1,
             match_number=1,
-            game=random.choice(available_games) if available_games else None
+            game=game_distributor.get_next_game()
         )
         
         return True
+    
+    @staticmethod
+    def _calculate_single_elimination_matches(num_teams):
+        """Calcular número total de partidas en eliminación simple"""
+        return num_teams - 1
+    
+    @staticmethod
+    def _calculate_double_elimination_matches(num_teams):
+        """Calcular número aproximado de partidas en eliminación doble"""
+        # Fórmula aproximada: 2n - 2 (en el peor caso)
+        return (2 * num_teams) - 2
     
     @staticmethod
     def _distribute_byes(teams, byes):
@@ -241,10 +286,26 @@ class BracketGenerator:
             'teams_in_r1': teams_in_r1,
             'byes': byes
         }
+        """Distribuir byes de manera balanceada - CORREGIDO"""
+        # Para 5 equipos: 2 juegan en R1, 3 tienen bye a R2
+        teams_in_r1 = len(teams) - byes
+        
+        # R1: Solo los primeros equipos sin bye
+        r1_participants = teams[:teams_in_r1]
+        
+        # R2: Equipos con bye
+        bye_teams = teams[teams_in_r1:]
+        
+        return {
+            'r1_teams': r1_participants,
+            'bye_teams': bye_teams,
+            'teams_in_r1': teams_in_r1,
+            'byes': byes
+        }
     
     @staticmethod
-    def _build_winners_bracket(tournament, distribution, rounds_winners, available_games):
-        """Construir Winners Bracket completo - CORREGIDO"""
+    def _build_winners_bracket(tournament, distribution, rounds_winners, game_distributor):
+        """Construir Winners Bracket completo con distribuidor de juegos"""
         
         # R1: Solo equipos sin bye
         r1_teams = distribution['r1_teams']
@@ -261,7 +322,7 @@ class BracketGenerator:
                     bracket_type='winners',
                     round_number=1,
                     match_number=match_number,
-                    game=random.choice(available_games) if available_games else None
+                    game=game_distributor.get_next_game()
                 )
                 match_number += 1
         
@@ -295,7 +356,7 @@ class BracketGenerator:
                     bracket_type='winners',
                     round_number=2,
                     match_number=match_number,
-                    game=random.choice(available_games) if available_games else None
+                    game=game_distributor.get_next_game()
                 )
                 match_number += 1
         
@@ -311,11 +372,11 @@ class BracketGenerator:
                     bracket_type='winners',
                     round_number=round_num,
                     match_number=match_number,
-                    game=random.choice(available_games) if available_games else None
+                    game=game_distributor.get_next_game()
                 )
     
     @staticmethod
-    def _build_losers_bracket(tournament, rounds_winners, available_games):
+    def _build_losers_bracket(tournament, rounds_winners, game_distributor):
         """Construir Losers Bracket - REESCRITO SIMPLE Y CORRECTO"""
         # Para 12 equipos: crear SOLO las partidas que realmente se van a usar
         # No crear partidas vacías que nunca se llenarán
@@ -331,8 +392,8 @@ class BracketGenerator:
         print(f'DEBUG: Losers bracket se construirá dinámicamente según avancen los equipos')
     
     @staticmethod
-    def _create_finals_structure(tournament, available_games):
-        """Crear estructura de finales"""
+    def _create_finals_structure(tournament, game_distributor):
+        """Crear estructura de finales con distribuidor de juegos"""
         # Gran Final
         Match.objects.create(
             tournament=tournament,
@@ -341,7 +402,7 @@ class BracketGenerator:
             bracket_type='grand_final',
             round_number=1,
             match_number=1,
-            game=random.choice(available_games) if available_games else None
+            game=game_distributor.get_next_game()
         )
         
         # Reset Final (solo se activa si losers gana)
@@ -352,7 +413,7 @@ class BracketGenerator:
             bracket_type='final_reset',
             round_number=1,
             match_number=1,
-            game=random.choice(available_games) if available_games else None
+            game=game_distributor.get_next_game()
         )
     
 class MatchService:
@@ -470,7 +531,7 @@ class MatchService:
     
     @staticmethod
     def _place_loser_in_losers_bracket(winners_match, loser):
-        """Colocar perdedor de Winners en losers - DINÁMICO CORREGIDO"""
+        """Colocar perdedor de Winners en losers - DINÁMICO CORREGIDO con distribuidor"""
         winners_round = winners_match.round_number
         tournament = winners_match.tournament
         
@@ -496,8 +557,13 @@ class MatchService:
             print(f'DEBUG: {loser.name} emparejado con {waiting_match.team1.name} en Losers R{target_losers_round} M{waiting_match.match_number}')
         else:
             # Crear nueva partida y esperar rival
-            available_games = list(Game.objects.filter(is_active=True))
-            game = random.choice(available_games) if available_games else None
+            try:
+                game_distributor = GameDistributor.create_for_tournament(tournament.id)
+                game = game_distributor.get_next_game()
+            except ValueError:
+                # Fallback si no hay juegos disponibles
+                available_games = list(Game.objects.filter(is_active=True))
+                game = random.choice(available_games) if available_games else None
             
             existing_matches = Match.objects.filter(
                 tournament=tournament,
@@ -518,7 +584,7 @@ class MatchService:
     
     @staticmethod
     def _handle_losers_bracket_result(match, winner, loser):
-        """Manejar resultado en Losers Bracket - DINÁMICO CORREGIDO"""
+        """Manejar resultado en Losers Bracket - DINÁMICO CORREGIDO con distribuidor"""
         # Perdedor queda eliminado
         loser.bracket_status = 'eliminated'
         loser.save()
@@ -560,8 +626,13 @@ class MatchService:
                 return
             
             # Crear nueva partida y esperar rival o perdedor de winners
-            available_games = list(Game.objects.filter(is_active=True))
-            game = random.choice(available_games) if available_games else None
+            try:
+                game_distributor = GameDistributor.create_for_tournament(match.tournament.id)
+                game = game_distributor.get_next_game()
+            except ValueError:
+                # Fallback si no hay juegos disponibles
+                available_games = list(Game.objects.filter(is_active=True))
+                game = random.choice(available_games) if available_games else None
             
             existing_matches = Match.objects.filter(
                 tournament=match.tournament,
