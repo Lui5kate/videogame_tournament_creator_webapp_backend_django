@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: tournament_backend
+    ports:
+      - "10.150.153.31:8097:8000"
+    volumes:
+      - ./media:/app/media
+      - static_volume:/app/staticfiles
+    env_file:
+      - .env.production
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: tournament_frontend
+    ports:
+      - "10.150.153.31:8096:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  static_volume:

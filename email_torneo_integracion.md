@@ -1,0 +1,427 @@
+# 📧 Correo de Invitación - Torneo de Integración
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Torneo de Integración - Videojuegos en Parejas</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #ffffff;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(255, 107, 53, 0.3);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1" fill="rgba(255,255,255,0.1)"/></svg>');
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .pixel-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 18px;
+            color: #ffffff;
+            text-shadow: 2px 2px 0px #000000;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            color: #ffffff;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .content {
+            padding: 30px 25px;
+        }
+        
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .emoji-large {
+            font-size: 48px;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .welcome-text {
+            font-size: 16px;
+            color: #ffcc02;
+            margin-bottom: 20px;
+        }
+        
+        .info-card {
+            background: linear-gradient(135deg, #2a2a4e 0%, #1e1e3f 100%);
+            border: 2px solid #ff6b35;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff6b35, #f7931e, #ffcc02);
+            border-radius: 8px;
+            z-index: -1;
+            opacity: 0.3;
+        }
+        
+        .card-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 12px;
+            color: #ffcc02;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+        
+        .highlight-box {
+            background: rgba(255, 204, 2, 0.1);
+            border-left: 4px solid #ffcc02;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+        }
+        
+        .steps-list {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+        
+        .steps-list li {
+            counter-increment: step-counter;
+            margin: 15px 0;
+            padding-left: 40px;
+            position: relative;
+        }
+        
+        .steps-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #ff6b35;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .rules-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .rule-item {
+            background: rgba(255, 107, 53, 0.1);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 107, 53, 0.3);
+        }
+        
+        .rule-emoji {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+        
+        .footer {
+            background: #0f0f1e;
+            padding: 25px;
+            text-align: center;
+            border-top: 2px solid #ff6b35;
+        }
+        
+        .footer-text {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        
+        .company-logo {
+            color: #ffcc02;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .urgent-banner {
+            background: linear-gradient(90deg, #ff4444, #ff6b35);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+        
+        @media (max-width: 600px) {
+            .pixel-title {
+                font-size: 14px;
+            }
+            
+            .rules-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .content {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="pixel-title">🎮 TORNEO DE INTEGRACIÓN</h1>
+            <p class="subtitle">Videojuegos en Parejas • Jueves 20 de Noviembre</p>
+        </div>
+        
+        <!-- Urgent Banner -->
+        <div class="urgent-banner">
+            ⚡ ¡REGISTRO URGENTE! Completa tu inscripción lo antes posible ⚡
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <!-- Welcome Section -->
+            <div class="welcome-section">
+                <span class="emoji-large">🎉</span>
+                <p class="welcome-text">
+                    ¡Bienvenido al evento gaming más esperado del año!<br>
+                    <strong>Torneo de Integración - Videojuegos en Parejas</strong>
+                </p>
+            </div>
+            
+            <!-- Registration Info -->
+            <div class="info-card">
+                <h3 class="card-title">🚀 Cómo Registrarse</h3>
+                
+                <div class="highlight-box">
+                    <strong>🔗 URL de Registro:</strong><br>
+                    <a href="http://10.150.153.31:8096/" class="cta-button" target="_blank">
+                        http://10.150.153.31:8096/
+                    </a>
+                </div>
+                
+                <p><strong>⚠️ IMPORTANTE:</strong> Necesitas estar conectado a:</p>
+                <ul style="margin: 10px 0 10px 20px;">
+                    <li>🔐 <strong>VPN 3G ISE</strong>, o</li>
+                    <li>🔐 <strong>Zscaler</strong></li>
+                </ul>
+                
+                <ol class="steps-list">
+                    <li>Accede al link de registro</li>
+                    <li><strong>En los campos "Usuario" y "ATTUID":</strong> Coloca tu ATTUID en ambos campos</li>
+                    <li>Completa el resto del formulario</li>
+                    <li>Regístrate en el torneo que aparezca en pantalla</li>
+                    <li>Haz clic en <strong>"Unirse al Torneo"</strong></li>
+                </ol>
+            </div>
+            
+            <!-- Team Assignment -->
+            <div class="info-card">
+                <h3 class="card-title">👥 Asignación de Equipos</h3>
+                <p>🎯 <strong>Se te asignará automáticamente:</strong></p>
+                <ul style="margin: 10px 0 10px 20px;">
+                    <li>Una pareja de juego</li>
+                    <li>Un nombre de equipo inicial</li>
+                    <li>Un <strong>Capitán de equipo</strong></li>
+                </ul>
+                
+                <div class="highlight-box">
+                    <strong>🎨 ¡Creatividad al poder!</strong><br>
+                    El Capitán puede cambiar el nombre del equipo.<br>
+                    ¡Saca a flote tu creatividad y elige un nombre épico!
+                </div>
+            </div>
+            
+            <!-- Event Details -->
+            <div class="info-card">
+                <h3 class="card-title">📅 Detalles del Evento</h3>
+                <div class="rules-grid">
+                    <div class="rule-item">
+                        <span class="rule-emoji">📅</span>
+                        <strong>Fecha:</strong><br>Jueves 20 de Noviembre
+                    </div>
+                    <div class="rule-item">
+                        <span class="rule-emoji">📍</span>
+                        <strong>Lugar:</strong><br>Sala Bell
+                    </div>
+                    <div class="rule-item">
+                        <span class="rule-emoji">⚡</span>
+                        <strong>Duración:</strong><br>Partidas rápidas
+                    </div>
+                    <div class="rule-item">
+                        <span class="rule-emoji">🎮</span>
+                        <strong>Dificultad:</strong><br>Muy fácil
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rules -->
+            <div class="info-card">
+                <h3 class="card-title">📋 Reglas Generales</h3>
+                
+                <div class="highlight-box">
+                    <strong>🎯 Formato del Torneo:</strong><br>
+                    <strong>Eliminación Doble</strong> - Tienes <strong>DOS oportunidades</strong> de perder antes de ser eliminado
+                </div>
+                
+                <p><strong>🎮 Sobre los Juegos:</strong></p>
+                <ul style="margin: 10px 0 10px 20px;">
+                    <li>Variedad de videojuegos diferentes</li>
+                    <li>Muy fáciles de aprender</li>
+                    <li>Partidas rápidas y dinámicas</li>
+                    <li><strong>NO se requiere experiencia previa</strong></li>
+                </ul>
+                
+                <p><strong>⏰ Tiempo de Preparación:</strong></p>
+                <ul style="margin: 10px 0 10px 20px;">
+                    <li>Regístrate lo más pronto posible</li>
+                    <li>Planea tu estrategia con tu pareja</li>
+                    <li>Piensa en un nombre creativo para tu equipo</li>
+                </ul>
+            </div>
+            
+            <!-- Call to Action -->
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="http://10.150.153.31:8096/" class="cta-button" target="_blank">
+                    🚀 ¡REGISTRARME AHORA!
+                </a>
+                <p style="font-size: 12px; color: #888; margin-top: 10px;">
+                    Haz clic para acceder a la plataforma de registro
+                </p>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p class="footer-text">
+                ¿Dudas o problemas técnicos? Contacta al equipo organizador
+            </p>
+            <p class="company-logo">
+                🎮 Torneo de Integración 2024 • Powered by Gaming Platform
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+```
+
+## 📋 Checklist de Elementos Incluidos
+
+### ✅ Información Esencial
+- [x] Título del evento: "Torneo de Integración - Videojuegos en Parejas"
+- [x] URL de registro: http://10.150.153.31:8096/
+- [x] Requisito de VPN (3G ISE o Zscaler)
+- [x] Instrucciones de ATTUID en ambos campos
+- [x] Fecha: Jueves 20 de Noviembre
+- [x] Lugar: Sala Bell
+
+### ✅ Proceso de Registro
+- [x] Pasos numerados claros
+- [x] Instrucción de "Unirse al Torneo"
+- [x] Asignación automática de pareja y equipo
+- [x] Rol del Capitán y cambio de nombre
+
+### ✅ Reglas del Torneo
+- [x] Eliminación doble explicada
+- [x] Variedad de videojuegos
+- [x] Facilidad (no requiere experiencia)
+- [x] Partidas rápidas
+- [x] Urgencia de registro
+
+### ✅ Diseño Visual
+- [x] Colores del sistema: #ff6b35, #f7931e, #ffcc02, #1a1a2e
+- [x] Fuente "Press Start 2P" para títulos
+- [x] Efectos arcade (gradientes, sombras, animaciones)
+- [x] Responsive design
+- [x] Elementos visuales gaming (emojis, iconos)
+
+### ✅ Profesionalismo
+- [x] Estructura clara y organizada
+- [x] Call-to-action prominente
+- [x] Información de contacto
+- [x] Branding consistente
+- [x] Urgencia apropiada sin ser agresiva

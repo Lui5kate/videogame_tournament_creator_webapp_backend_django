@@ -159,6 +159,7 @@ const Register = () => {
               </label>
               <input
                 type="password"
+                autoComplete="new-password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}

@@ -1,0 +1,37 @@
+FROM python:3.12-alpine as builder
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN apk update && apk add --no-cache --virtual .build-deps \
+    gcc \
+    musl-dev \
+    mysql-dev \
+    python3-dev \
+    libffi-dev \
+    && pip install --upgrade pip setuptools
+
+COPY requirements.txt /tmp/
+RUN pip install --no-cache-dir --user -r /tmp/requirements.txt
+
+FROM python:3.12-alpine
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PATH=/root/.local/bin:$PATH
+
+RUN apk add --no-cache mysql-client mariadb-connector-c \
+    && adduser -D -s /bin/sh appuser
+
+COPY --from=builder /root/.local /root/.local
+
+WORKDIR /code
+
+COPY . /code/
+
+RUN find . -name "*.pyc" -delete \
+    && find . -name "__pycache__" -type d -exec rm -rf {} + \
+    && rm -rf .git* doc/ test/ venv/ *.md || true \
+    && rm -rf media/uploads/* || true
+
+CMD ["sh", "entrypoint.sh"]

@@ -1,0 +1,48 @@
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+doc/
+docs/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Django
+db.sqlite3
+*.log
+media/uploads/
+
+# Environment
+.env*
+
+# Deployment files
+deployment/
+*.tar
+*.tar.gz
+
+# Node.js
+frontend/node_modules/
+frontend/.vite/
+
+# Test files
+test/
+tests/

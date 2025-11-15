@@ -1,26 +1,10 @@
-# Core Django
+# Dependencias de producción optimizadas
 Django==4.2.7
 djangorestframework==3.14.0
-djangorestframework-simplejwt==5.3.0
 django-cors-headers==4.3.1
-
-# Database
-mysqlclient==2.2.0
-psycopg2-binary==2.9.7
-
-# Media handling
-Pillow==10.0.1
-
-# WebSocket support
-channels==4.0.0
-channels-redis==4.1.0
-
-# Production server
+djangorestframework-simplejwt==5.3.0
+Pillow==10.1.0
 gunicorn==21.2.0
+mysqlclient==2.2.5
+python-dotenv==1.0.0
 whitenoise==6.6.0
-
-# Environment variables
-python-decouple==3.8
-
-# Security
-django-environ==0.11.2

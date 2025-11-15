@@ -78,6 +78,7 @@ const Login = () => {
               </label>
               <input
                 type="password"
+                autoComplete="current-password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
